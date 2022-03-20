@@ -35,7 +35,7 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         jvmTarget = "11"
-        freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+        freeCompilerArgs = freeCompilerArgs + "-opt-in=kotlin.RequiresOptIn"
     }
 }
 
@@ -47,5 +47,34 @@ compose.desktop {
             packageName = "iconConverter"
             packageVersion = "1.0.0"
         }
+        description = """|
+            |Icon converter using Svg2Compose library
+            |Browse icons on your pc
+        """.trimMargin()
+
     }
+}
+
+tasks.create("masterBuilder") {
+    group = "build"
+    dependsOn("build")
+    dependsOn("package")
+
+
+    val file = File(buildDir.path, "compose/binaries/main")
+
+    file.listFiles()?.forEach { directory ->
+
+        if (directory.isDirectory) {
+            directory.listFiles()?.forEach { packagedFile ->
+                packagedFile.inputStream().use { inputStream ->
+                    File(projectDir.path, "assets/${packagedFile.name}").outputStream().use { outputStream ->
+                        outputStream.write(inputStream.readAllBytes())
+                    }
+                }
+            }
+        }
+
+    }
+
 }
