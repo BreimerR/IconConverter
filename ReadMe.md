@@ -22,6 +22,11 @@ having that as a feature will be done later or already has been done.
     1. Are hell apparently my multi threading skills are next to null or Compose is just a bit hard still, I plead the
        latter
 
+## Workarounds
+1. Be patient
+2. Close and restart
+3. Shut down your whole pc. Disconnect the from power. Shutdown mains and turn everything off it's over
+
 ## Features
 
 1. [x] Svg to Compose
