@@ -20,10 +20,12 @@ import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.Copy
 import libetal.applications.svg2compose.convert
+import libetal.applications.svg2compose.ui.layouts.SlectableText
 import libetal.kotlin.compose.narrator.Narrate
 import libetal.kotlin.compose.narrator.Narration
 import libetal.kotlin.compose.narrator.Narrator
 import libetal.kotlin.compose.narrator.narration
+
 
 @Composable
 fun ParseLayout() {
@@ -31,10 +33,7 @@ fun ParseLayout() {
 
         val iconNarration: Narration<ParserTabs> = ParserTabs.ICON.narration
         val iconsNarration: Narration<ParserTabs> = ParserTabs.ICONS.narration
-        val customTextSelectionColors = TextSelectionColors(
-            handleColor = MaterialTheme.colors.onSecondary,
-            backgroundColor = MaterialTheme.colors.secondary,
-        )
+
 
         val vScrollState = rememberScrollState()
         val hScrollState = rememberScrollState()
@@ -120,18 +119,12 @@ fun ParseLayout() {
 
                                     Spacer(modifier = Modifier.height(4.dp))
 
-                                    CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
-
-                                        SelectionContainer(Modifier.wrapContentSize()) {
-                                            for (error in errors) {
-                                                Text(
-                                                    error,
-                                                    style = MaterialTheme.typography.caption.copy(MaterialTheme.colors.onError),
-                                                    modifier = Modifier.wrapContentSize()
-                                                )
-                                            }
-                                        }
-
+                                    for (error in errors) {
+                                        SlectableText(
+                                            error,
+                                            style = MaterialTheme.typography.caption.copy(MaterialTheme.colors.onError),
+                                            modifier = Modifier.wrapContentSize()
+                                        )
                                     }
 
                                 }
@@ -167,24 +160,15 @@ fun ParseLayout() {
                             Modifier.fillMaxWidth().padding(4.dp).horizontalScroll(hScrollState).verticalScroll(vScrollState)
                         ) {
 
-                            CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
 
-                                Narrate<ParserTabs>({ true }) {
+                            Narrate<ParserTabs>({ true }) {
 
-                                    ParserTabs.ICON {
+                                ParserTabs.ICON {
+                                    SlectableText(svg, modifier = Modifier.wrapContentSize())
+                                }
 
-                                        SelectionContainer(Modifier.wrapContentSize()) {
-                                            Text(svg, modifier = Modifier.wrapContentSize())
-                                        }
-
-                                    }
-
-                                    ParserTabs.ICONS {
-                                        SelectionContainer(Modifier.wrapContentSize()) {
-                                            Text(allIcons, modifier = Modifier.wrapContentSize())
-                                        }
-                                    }
-
+                                ParserTabs.ICONS {
+                                    SlectableText(allIcons, modifier = Modifier.wrapContentSize())
                                 }
 
                             }

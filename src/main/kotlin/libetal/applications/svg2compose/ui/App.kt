@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +36,7 @@ import compose.icons.fontawesomeicons.solid.Times
 import kotlinx.coroutines.*
 import libetal.applications.svg2compose.MainViewModel
 import libetal.applications.svg2compose.convert
+import libetal.applications.svg2compose.ui.layouts.SlectableText
 import libetal.applications.svg2compose.ui.layouts.parser.ParseLayout
 import libetal.applications.svg2compose.ui.theme.AppTheme
 import libetal.kotlin.compose.narrator.Narrate
@@ -249,7 +251,11 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
 
                             val scrollState = rememberLazyListState()
 
-                            LazyVerticalGrid(GridCells.Adaptive(iconPreviewSize.dp),state = scrollState, modifier = Modifier.fillMaxSize(),) {
+                            LazyVerticalGrid(
+                                GridCells.Adaptive(iconPreviewSize.dp),
+                                state = scrollState,
+                                modifier = Modifier.fillMaxSize(),
+                            ) {
 
                                 itemsIndexed(presentableIcons) { index, icon ->
                                     fun onPreviewClick() {
@@ -292,7 +298,7 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
 
                                 Column(Modifier.fillMaxSize().verticalScroll(scrollState).horizontalScroll(hScrollState)) {
                                     Column(Modifier.fillMaxHeight().wrapContentSize()) {
-                                        Text(iconClassState)
+                                        SlectableText(iconClassState)
                                     }
                                 }
                             }
