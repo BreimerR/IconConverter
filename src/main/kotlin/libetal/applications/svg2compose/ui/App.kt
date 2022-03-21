@@ -1,5 +1,6 @@
 package libetal.applications.svg2compose.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
@@ -17,9 +18,12 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -27,15 +31,16 @@ import br.com.devsrsouza.svg2compose.Size
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.regular.Folder
-import compose.icons.fontawesomeicons.regular.FolderOpen
-import compose.icons.fontawesomeicons.regular.Image
-import compose.icons.fontawesomeicons.regular.TimesCircle
+import compose.icons.fontawesomeicons.regular.*
+import compose.icons.fontawesomeicons.solid.Minus
+import compose.icons.fontawesomeicons.solid.Plus
 import compose.icons.fontawesomeicons.solid.Search
 import compose.icons.fontawesomeicons.solid.Times
 import kotlinx.coroutines.*
 import libetal.applications.svg2compose.MainViewModel
 import libetal.applications.svg2compose.convert
+import libetal.applications.svg2compose.data.Icon
+import libetal.applications.svg2compose.models.IconsViewModel
 import libetal.applications.svg2compose.ui.layouts.SlectableText
 import libetal.applications.svg2compose.ui.layouts.parser.ParseLayout
 import libetal.applications.svg2compose.ui.theme.AppTheme
@@ -51,6 +56,8 @@ import libetal.multiplatform.log.Log
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.forEachDirectoryEntry
 
@@ -132,7 +139,7 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
 
     val presentableIcons by remember {
         derivedStateOf {
-            if (filtered) icons.filter { icon -> icon.path.contains(".*$searchIcon.*".toRegex()) } else icons
+            if (filtered) viewModel.icons.filter { icon -> icon.path.contains(".*$searchIcon.*".toRegex()) } else icons
         }
     }
 
@@ -223,8 +230,6 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
 
             Row(modifier = Modifier.height(contentHeight).fillMaxWidth()) {
 
-                val rowScope = this
-
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     val iconsPreviewWidth: Dp = if (currentIcon == null) maxWidth
                     else 240.dp
@@ -237,15 +242,32 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
                             var iconPreviewSize by remember { mutableStateOf(80) }
 
                             Row(
-                                Modifier.height(32.dp),
+                                Modifier.height(32.dp).fillMaxWidth().padding(horizontal = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.End
                             ) {
 
-                                Input(iconPreviewSize.toString(), modifier = Modifier.width(40.dp).padding(horizontal = 4.dp)) {
-                                    it.trim().ifEmpty { null }?.toIntOrNull()?.let { size ->
-                                        iconPreviewSize = size
+
+                                Row {
+
+                                    Input(iconPreviewSize.toString(), modifier = Modifier.width(80.dp).padding(horizontal = 16.dp)) {
+                                        it.trim().ifEmpty { null }?.toIntOrNull()?.let { size ->
+                                            iconPreviewSize = size
+                                        }
                                     }
+
+                                    Spacer(Modifier.width(2.dp))
+
+                                    IconButton(FontAwesomeIcons.Solid.Plus, 24, contentDescription = "Increase icon Size") {
+                                        iconPreviewSize += 2
+                                    }
+
+                                    Spacer(Modifier.width(2.dp))
+
+                                    IconButton(FontAwesomeIcons.Solid.Minus, 24, contentDescription = "Decrease Icon Size") {
+                                        iconPreviewSize -= 2
+                                    }
+
                                 }
                             }
 
@@ -277,33 +299,11 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
 
                         }
 
-                        if (currentIcon != null) {
-                            Column(Modifier.width(iconContentWidth).fillMaxHeight()) {
-                                Row(Modifier.height(38.dp)) {
-                                    IconButton(FontAwesomeIcons.Regular.TimesCircle, 32, contentDescription = "Icon") {
-                                        currentIcon = null
-                                    }
-                                }
-
-                                var iconClassState by remember {
-                                    mutableStateOf("")
-                                }
-
-                                viewModel.convert(currentIcon!!) {
-                                    iconClassState = it
-                                }
-
-                                val scrollState = rememberScrollState()
-                                val hScrollState = rememberScrollState()
-
-                                Column(Modifier.fillMaxSize().verticalScroll(scrollState).horizontalScroll(hScrollState)) {
-                                    Column(Modifier.fillMaxHeight().wrapContentSize()) {
-                                        SlectableText(iconClassState)
-                                    }
-                                }
+                        currentIcon.compose { icon ->
+                            IconClassFileLayout(iconContentWidth, icon) {
+                                currentIcon = null
                             }
                         }
-
                     }
                 }
             }
@@ -312,8 +312,46 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
+fun IconClassFileLayout(
+    iconContentWidth: Dp,
+    icon: Icon,
+    onCloseRequest: () -> Unit
+) {
+
+    Column(Modifier.width(iconContentWidth).fillMaxHeight()) {
+
+        val scrollState = rememberScrollState()
+        val hScrollState = rememberScrollState()
+        val clipBoardManager = LocalClipboardManager.current
+
+        Row(
+            Modifier.height(38.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+
+            IconButton(FontAwesomeIcons.Regular.TimesCircle, 32, "Icon", onClick = onCloseRequest)
+
+            Text(icon.path.substringAfterLast("/"))
+
+            IconButton(FontAwesomeIcons.Regular.Copy, 32, "Copy Icon") {
+                clipBoardManager.setText(AnnotatedString(icon.composeClassFile))
+            }
+
+        }
+
+        Column(Modifier.fillMaxSize().verticalScroll(scrollState).horizontalScroll(hScrollState)) {
+            Column(Modifier.fillMaxHeight().padding(4.dp).wrapContentSize()) {
+                SlectableText(icon.composeClassFile)
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalComposeUiApi::class)
 fun IconPreviewLayout(icon: Icon, modifier: Modifier) {
 
     Column(
@@ -338,183 +376,10 @@ fun IconPreviewLayout(icon: Icon, modifier: Modifier) {
 
 }
 
-data class Icon(val path: String, val painter: Painter, val inputStream: InputStream, var composeClassFile: String = "")
 
-class IconsViewModel : ViewModel() {
-
-    private var job: Job? = null
-
-    val path = mutableStateOf(System.getProperty("user.home") ?: "")
-
-    var scrapingState = mutableStateOf(false)
-
-    var scraping by scrapingState
-
-    var currentPath: String = path.value
-
-    val iconsState = mutableStateListOf<Icon>()
-
-    val icons = mutableListOf<Icon>()
-
-    override fun onCreate() {
-        Log.d(TAG, "Creating...")
+@Composable
+inline fun <T> T?.compose(block: @Composable (T) -> Unit) {
+    if (this != null) {
+        block(this)
     }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d("IconsViewModel", "Pausing...")
-    }
-
-    override fun onStart() {
-        super.onStart()
-        Log.d("IconsViewModel", "Started...")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        loadPath()
-        Log.d(TAG, "Resumed ...")
-    }
-
-    fun updateIconsState(chunkSize: Int = 10) {
-
-        if (scraping) coroutineScope.launch(Dispatchers.IO) {
-            while (scraping && isActive) {
-            }
-            updateIconsState(chunkSize)
-        } else {
-
-            Log.d(TAG, "Updating icons = ${icons.size} = Icons state= ${iconsState.size}")
-            var i = iconsState.size
-            val max = i + chunkSize
-
-            while (i < max && i < icons.size) {
-                iconsState.add(icons[i++])
-            }
-        }
-
-    }
-
-    fun loadPath() {
-        job = coroutineScope.launch(Dispatchers.IO) {
-            val path = currentPath.trim().ifBlank { null }
-
-            path?.let { activePath ->
-                scraping = true
-                File(activePath).getIcons()
-                scraping = false
-            }
-        }
-    }
-
-    fun File.getIcons() {
-        if (job != null) {
-            if (job?.isActive == true) {
-                if (isDirectory) {
-
-                    if (path == "." || path == "..") return
-
-                    currentPath = path
-
-                    try {
-                        toPath().forEachDirectoryEntry {
-                            it.toFile().getIcons()
-                        }
-                    } catch (e: java.nio.file.AccessDeniedException) {
-                        Log.d(TAG, "Access denied for $path")
-                    }
-
-                } else {
-                    isSvg {
-
-                        val stream = try {
-                            val stream = inputStream()
-                            if (stream.readAllBytes().isEmpty()) {
-                                Log.d(TAG, "File is empty $path")
-                                null
-                            } else inputStream()
-                        } catch (e: java.nio.file.AccessDeniedException) {
-                            Log.d(TAG, "File access denied $path")
-                            null
-                        } ?: return Log.d(TAG, "Stream for $path is null")
-
-                        val painter = try {
-                            loadSvgPainter(stream, Density(80f, 1f))
-                        } catch (e: Exception) {
-                            Log.d(TAG, "Failed to get painter")
-                            null
-                        } ?: return Log.d(TAG, "Painter for $path is null")
-
-                        val icon = Icon(path, painter, stream)
-
-                        try {
-                            icon.composeClassFile = icon.convert(size = Size(24))
-
-                            icons.add(icon)
-
-                            coroutineScope.launch(Dispatchers.Main) {
-                                if (iconsState.size < 10) {
-                                    iconsState.add(icon)
-                                }
-                            }
-
-                        } catch (e: Exception) {
-                            Log.w(TAG, "Unsupported icon ${icon.path}", e)
-                        }
-
-
-                    }
-
-                }
-            } else Log.d(TAG, "Job was canceled")
-        } else Log.d(TAG, "Job is empty")
-
-    }
-
-    private inline fun File.isSvg(action: () -> Unit) {
-        path.trim().ifBlank { null }?.split("/")?.let { sections ->
-            if (sections.last().lowercase().split('.').last() == "svg") {
-                action()
-            }
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d("IconsViewModel", "Decomposing Icons... $state")
-        iconsState.clear()
-        icons.clear()
-        currentPath = path.value
-
-    }
-
-    val tempDir by lazy {
-        createTempDirectory("ic_converter").toFile()
-    }
-
-    fun convert(
-        currentIcon: Icon,
-        receiverName: String = "Icon",
-        packageName: String = "com.example",
-        size: Size? = null,
-        onComplete: (String) -> Unit
-    ) {
-        coroutineScope.launch {
-            onComplete(
-                currentIcon.convert(
-                    receiverName,
-                    packageName,
-                    size
-                )
-            )
-        }
-    }
-
-    fun Icon.convert(receiverName: String = "Icon", packageName: String = "com.example", size: Size? = null) =
-        File(path).convert(tempDir, receiverName, packageName, size)
-
-    companion object {
-        const val TAG = "IconsViewModel"
-    }
-
 }

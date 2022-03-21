@@ -20,7 +20,7 @@ having that as a feature will be done later or already has been done.
         1. [x] At your own risk. (Just saying your pc might die).
 3. [ ] Load times
     1. Are hell apparently my multi threading skills are next to null or Compose is just a bit hard still, I plead the
-       latter
+       latter.
 
 ## Workarounds
 1. Be patient

@@ -44,7 +44,7 @@ compose.desktop {
         mainClass = "libetal.applications.svg2compose.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "iconConverter"
+            packageName = "Assetor"
             packageVersion = "1.0.0"
         }
         description = """|

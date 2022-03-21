@@ -6,5 +6,6 @@ pluginManagement {
     }
 
 }
-rootProject.name = "IconConverter" // Assetor
+
+rootProject.name = "Assetor"
 
