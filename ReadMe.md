@@ -11,21 +11,22 @@ having that as a feature will be done later or already has been done.
 
 1. [x] Multiplatform
     1. [x] Linux 🔥
-    2. [ ] Wondows 🤣🤣
+    2. [ ] Windows 🤣🤣
        ```Well can't game on linux at it's best you don't see me complain about it!!```
     3. [ ] Mac 🤣🤣🤣 ``` Well they can't game at all don't know```
 2. [x] Buggy
-    1. Yes very!!!
+    1. Less Buggy
     2. Search
-        1. [x] At your own risk. (Just saying your pc might die).
-3. [ ] Load times
-    1. Are hell apparently my multi threading skills are next to null or Compose is just a bit hard still, I plead the
-       latter.
+        1. [x] At your own risk. (Just saying your pc might die). Actually improved this 😅
+3. [ ] Load times.
+   1. Fair enough depending on your directories sizes
 
 ## Workarounds
+
 1. Be patient
 2. Close and restart
-3. Shut down your whole pc. Disconnect the from power. Shutdown mains and turn everything off it's over
+3. Shut down your whole pc. Disconnect the from power. Shutdown mains and turn everything off it's over. 
+4. Download new version ()
 
 ## Features
 

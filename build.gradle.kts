@@ -1,5 +1,6 @@
 import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.compose.desktop.tasks.AbstractComposeDesktopTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -7,8 +8,8 @@ plugins {
     id("org.jetbrains.compose") version "1.1.1"
 }
 
-group = "libetal.web.test"
-version = "1.0"
+group = "libetal.applications.assetor"
+version = "1.0.1"
 
 repositories {
     google()
@@ -28,6 +29,7 @@ dependencies {
     implementation("br.com.devsrsouza:svg-to-compose:0.7.0")
     implementation("libetal.libraries.compose.layouts:text:1.0.0")
     implementation("libetal.libraries.compose.layouts:icons:1.0.0")
+    implementation("libetal.libraries.compose.layouts:dropdown:1.0.0")
     implementation("libetal.kotlin.compose:narrator-desktop:1.0.1-SNAPSHOT")
     implementation("br.com.devsrsouza.compose.icons.jetbrains:font-awesome:1.0.0")
 }
@@ -45,7 +47,8 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Assetor"
-            packageVersion = "1.0.0"
+            packageVersion = "1.0.1"
+
         }
         description = """|
             |Icon converter using Svg2Compose library
@@ -55,24 +58,40 @@ compose.desktop {
     }
 }
 
-tasks.create("masterBuilder") {
+tasks.create("updateAssets") {
     group = "build"
-    dependsOn("build")
-    dependsOn("package")
+    dependsOn(
+        "build",
+        "packageDeb",
+        "packageDmg",
+        "packageMsi"
+    )
 
+    doLast {
 
-    val file = File(buildDir.path, "compose/binaries/main")
+        val file = File(buildDir.path, "compose/binaries/main")
+        val assetsDir = File(projectDir.path, "assets")
 
-    file.listFiles()?.forEach { directory ->
+        assetsDir.listFiles()?.forEach { plausiblePackageFile ->
+            if (!plausiblePackageFile.isDirectory) {
+                when (plausiblePackageFile.extension) {
+                    "dep", "msi", "dmg", "exe" -> plausiblePackageFile.delete()
+                }
+            }
+        }
 
-        if (directory.isDirectory) {
-            directory.listFiles()?.forEach { packagedFile ->
-                packagedFile.inputStream().use { inputStream ->
-                    File(projectDir.path, "assets/${packagedFile.name}").outputStream().use { outputStream ->
-                        outputStream.write(inputStream.readAllBytes())
+        file.listFiles()?.forEach { directory ->
+
+            if (directory.isDirectory) {
+                directory.listFiles()?.forEach { packagedFile ->
+                    packagedFile.inputStream().use { inputStream ->
+                        File(assetsDir, packagedFile.name).outputStream().use { outputStream ->
+                            outputStream.write(inputStream.readAllBytes())
+                        }
                     }
                 }
             }
+
         }
 
     }
