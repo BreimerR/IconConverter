@@ -1,6 +1,6 @@
+import org.gradle.internal.nativeintegration.filesystem.jdk7.WindowsJdk7Symlink
 import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.compose.desktop.tasks.AbstractComposeDesktopTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -43,13 +43,32 @@ tasks.withType<KotlinCompile> {
 
 compose.desktop {
     application {
+
         mainClass = "libetal.applications.svg2compose.MainKt"
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm)
+
+            val version = "1.0.1"
+
             packageName = "Assetor"
-            packageVersion = "1.0.1"
+            packageVersion = version
+
+            linux {
+                debMaintainer = "brymher@gmail.com"
+                appCategory = "Vector Graphics;Design;Development"
+
+
+                // a version for all Linux distributables
+                packageVersion = version
+                // a version only for the deb package
+                debPackageVersion = version
+                // a version only for the rpm package
+                rpmPackageVersion = version
+            }
 
         }
+
+
         description = """|
             |Icon converter using Svg2Compose library
             |Browse icons on your pc
@@ -85,7 +104,7 @@ tasks.create("updateAssets") {
             if (directory.isDirectory) {
                 directory.listFiles()?.forEach { packagedFile ->
                     packagedFile.inputStream().use { inputStream ->
-                        File(assetsDir, packagedFile.name).outputStream().use { outputStream ->
+                        File(assetsDir, "assetor.${packagedFile.extension}").outputStream().use { outputStream ->
                             outputStream.write(inputStream.readAllBytes())
                         }
                     }

@@ -59,6 +59,16 @@ import kotlin.contracts.contract
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.forEachDirectoryEntry
 
-data class Icon(val path: String, val painter: Painter, val inputStream: InputStream, var composeClassFile: String = "")
+data class Icon(val path: String, val painter: Painter, val inputStream: InputStream) {
+
+    val composeClassFileState = mutableStateOf("")
+
+    var composeClassFile: String
+        get() = composeClassFileState.value
+        set(value) {
+            composeClassFileState.value = value
+        }
+
+}
 
 

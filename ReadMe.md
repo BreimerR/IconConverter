@@ -39,7 +39,7 @@ having that as a feature will be done later or already has been done.
 ## Installation
 
 1. Download
-    1. [x] [Dep File](assets/iconconverter_1.0.0-1_amd64.deb)
+    1. [x] [Dep File](assets/assetor.deb)
     2. [ ] [Windows File]()
     3. [ ] [MAC File]()
 

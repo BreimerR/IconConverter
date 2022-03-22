@@ -2,7 +2,6 @@ package libetal.applications.svg2compose.ui.layouts
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -12,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import compose.icons.FontAwesomeIcons
@@ -25,7 +23,7 @@ import compose.icons.fontawesomeicons.solid.Search
 import compose.icons.fontawesomeicons.solid.Times
 import libetal.applications.svg2compose.data.Icon
 import libetal.applications.svg2compose.models.IconsViewModel
-import libetal.applications.svg2compose.ui.compose
+import libetal.applications.svg2compose.ui.utils.compose
 import libetal.applications.svg2compose.ui.icons.Assetor
 import libetal.applications.svg2compose.ui.icons.Resize24
 import libetal.libraries.compose.layouts.DropdownMenuItem
@@ -75,7 +73,7 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
 
                         InputLayout(
                             InputModifier.Default {
-                                height(iconSize.dp)
+                                Modifier.height(iconSize.dp)
                                     .shape(RoundedCornerShape(50), MaterialTheme.colors.secondary, 2.dp)
                                     .padding(start = 2.dp, end = 2.dp)
                             }(verticalAlignment = Alignment.CenterVertically)
@@ -112,7 +110,7 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
 
                     InputLayout(
                         InputModifier.Default {
-                            fillMaxWidth()
+                            Modifier.fillMaxWidth()
                                 .height(iconSize.dp)
                                 .shape(RoundedCornerShape(50), color = MaterialTheme.colors.secondary)
                                 .padding(horizontal = 4.dp)
@@ -259,7 +257,7 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
                         }
 
                         currentIcon.compose { icon ->
-                            IconClassFileLayout(iconContentWidth, icon) {
+                            IconClassFileLayout(icon,iconContentWidth) {
                                 currentIcon = null
                             }
                         }

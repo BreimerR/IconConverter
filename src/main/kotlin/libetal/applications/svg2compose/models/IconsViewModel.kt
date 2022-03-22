@@ -1,14 +1,15 @@
 package libetal.applications.svg2compose.models
 
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.unit.Density
 import br.com.devsrsouza.svg2compose.Size
-import compose.icons.fontawesomeicons.regular.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import libetal.applications.svg2compose.convert
 import libetal.applications.svg2compose.data.Icon
 import libetal.kotlin.compose.narrator.lifecycle.ViewModel
@@ -19,11 +20,48 @@ import kotlin.io.path.forEachDirectoryEntry
 
 class IconsViewModel : ViewModel() {
 
-    private var job: Job? = null
+    var job: Job? = null
 
     val path = mutableStateOf(System.getProperty("user.home") ?: "")
 
     var scrapingState = mutableStateOf(false)
+
+    var regenerationJob: Job? = null
+
+    val iconPackageNameState = mutableStateOf("libetal.applications.assetor")
+
+    var iconPackageName
+        get() = iconPackageNameState.value
+        set(value) {
+            iconPackageNameState.value = value
+
+            regenerationJob?.cancel()
+
+            regenerationJob = coroutineScope.launch(Dispatchers.IO) {
+                iconsState.forEach { icon ->
+                    icon.composeClassFile = icon.convert()
+                }
+            }
+
+        }
+
+    val iconReceiverNameState = mutableStateOf("Icons")
+
+    /*Scraping state might affect this but not yet */
+    var iconReceiverName
+        get() = iconReceiverNameState.value
+        set(value) {
+            iconReceiverNameState.value = value
+
+            regenerationJob?.cancel()
+
+            regenerationJob = coroutineScope.launch(Dispatchers.IO) {
+                iconsState.forEach { icon ->
+                    icon.composeClassFile = icon.convert()
+                }
+            }
+
+        }
 
     var scraping by scrapingState
 
@@ -63,7 +101,7 @@ class IconsViewModel : ViewModel() {
 
     }
 
-    fun loadPath() {
+    private fun loadPath() {
         job = coroutineScope.launch(Dispatchers.IO) {
             val path = currentPath.trim().ifBlank { null }
 
@@ -163,7 +201,7 @@ class IconsViewModel : ViewModel() {
 
     fun convert(
         currentIcon: Icon,
-        receiverName: String = "Icon",
+        receiverName: String = iconReceiverName,
         packageName: String = "com.example",
         size: Size? = null,
         onComplete: (String) -> Unit
@@ -179,7 +217,7 @@ class IconsViewModel : ViewModel() {
         }
     }
 
-    fun Icon.convert(receiverName: String = "Icon", packageName: String = "com.example", size: Size? = null) =
+    fun Icon.convert(receiverName: String = iconReceiverName, packageName: String = iconPackageName, size: Size? = null) =
         File(path).convert(tempDir, receiverName, packageName, size)
 
     companion object {

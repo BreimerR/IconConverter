@@ -2,6 +2,7 @@ package libetal.applications.svg2compose.ui.layouts
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.mouseClickable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +11,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
@@ -49,12 +53,19 @@ fun IconPreviewLayout(icon: Icon, modifier: Modifier) {
             }
         }
 
+        var dropDownFocus by remember { mutableStateOf(false) }
+        val focusRequester = FocusRequester()
+
         DropdownMenu(
             dropDownState,
-            modifier = Modifier.padding(2.dp),
+            modifier = Modifier.padding(2.dp).focusRequester(focusRequester).focusable(true).onFocusChanged {
+                dropDownFocus = !it.isFocused
+            },
             onDismissRequest = {
                 dropDownState = false
-            }) {
+            }
+        ) {
+
 
             val shape = RoundedCornerShape(50)
 
@@ -71,6 +82,12 @@ fun IconPreviewLayout(icon: Icon, modifier: Modifier) {
                 sizeIn = MenuDefaults.SizeIn.copy(minHeight = 32.dp)
             ) {
                 Text("Copy Kt Class")
+            }
+
+            SideEffect {
+                if (dropDownFocus) {
+                    focusRequester.requestFocus()
+                }
             }
         }
     }
