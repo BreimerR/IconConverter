@@ -15,17 +15,20 @@ having that as a feature will be done later or already has been done.
        ```Well can't game on linux at it's best you don't see me complain about it!!```
     3. [ ] Mac 🤣🤣🤣 ``` Well they can't game at all don't know```
 2. [x] Buggy
-    1. Less Buggy
+    1. Way Less Buggy 🤔 Buggy
     2. Search
-        1. [x] At your own risk. (Just saying your pc might die). Actually improved this 😅
+        1. [ < v1.0.2] At your own risk. (Just saying your pc might die).
+        2. [v1.0.2] Improved search 🔥🔥
 3. [ ] Load times.
-   1. Fair enough depending on your directories sizes
+    1. [v1.0.1] Fair enough depending on your directories sizes
+    2. [v1.0.2] Quite efficient
+       ```Each directory sweep is it's own thread & each file read is it's own thread 🔥```
 
 ## Workarounds
 
 1. Be patient
 2. Close and restart
-3. Shut down your whole pc. Disconnect the from power. Shutdown mains and turn everything off it's over. 
+3. Shut down your whole pc. Disconnect the from power. Shutdown mains and turn everything off it's over.
 4. Download new version ()
 
 ## Features
