@@ -1,15 +1,17 @@
-import org.gradle.internal.nativeintegration.filesystem.jdk7.WindowsJdk7Symlink
 import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+val projectVersion: String by project
+val projectGroup: String by project
 
 plugins {
     kotlin("jvm") version "1.6.10"
     id("org.jetbrains.compose") version "1.1.1"
 }
 
-group = "libetal.applications.assetor"
-version = "1.0.1"
+group = projectGroup
+version = projectVersion
 
 repositories {
     google()
@@ -25,13 +27,20 @@ dependencies {
     implementation(compose.runtime)
     implementation(compose.foundation)
     implementation(compose.desktop.currentOs)
+
+
+
+    implementation("libetal.libraries.compose.layouts:text-desktop:1.0.0")
+    implementation("libetal.libraries.compose.layouts:icons-desktop:1.0.0")
+    implementation("libetal.kotlin.compose:narrator-desktop:1.0.1-SNAPSHOT")
+    implementation("libetal.libraries.compose.layouts:dropdown-desktop:1.0.0")
+
     implementation("com.squareup:kotlinpoet:1.10.2")
     implementation("br.com.devsrsouza:svg-to-compose:0.7.0")
-    implementation("libetal.libraries.compose.layouts:text:1.0.0")
-    implementation("libetal.libraries.compose.layouts:icons:1.0.0")
-    implementation("libetal.libraries.compose.layouts:dropdown:1.0.0")
-    implementation("libetal.kotlin.compose:narrator-desktop:1.0.1-SNAPSHOT")
     implementation("br.com.devsrsouza.compose.icons.jetbrains:font-awesome:1.0.0")
+
+    testImplementation(kotlin("test"))
+
 }
 
 tasks.withType<KotlinCompile> {
@@ -48,10 +57,8 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm)
 
-            val version = "1.0.1"
-
             packageName = "Assetor"
-            packageVersion = version
+            packageVersion = projectVersion
 
             linux {
                 debMaintainer = "brymher@gmail.com"
@@ -59,11 +66,11 @@ compose.desktop {
 
 
                 // a version for all Linux distributables
-                packageVersion = version
+                packageVersion = projectVersion
                 // a version only for the deb package
-                debPackageVersion = version
+                debPackageVersion = projectVersion
                 // a version only for the rpm package
-                rpmPackageVersion = version
+                rpmPackageVersion = projectVersion
             }
 
         }

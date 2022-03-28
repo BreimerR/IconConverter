@@ -83,12 +83,12 @@ fun App(viewModel: MainViewModel) = AppTheme(viewModel.isDarkMode) {
 
                         Narrate<AppNarrations>({ true }) {
 
-                            AppNarrations.BROWSER({ IconsViewModel() }) {
-                                IconsDisplayLayout(lifeCycleViewModel())
-                            }
-
                             AppNarrations.PARSER {
                                 ParseLayout()
+                            }
+
+                            AppNarrations.BROWSER({ IconsViewModel() }) {
+                                IconsDisplayLayout(lifeCycleViewModel())
                             }
 
                         }

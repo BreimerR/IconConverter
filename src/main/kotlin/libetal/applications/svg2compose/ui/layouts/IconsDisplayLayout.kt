@@ -50,7 +50,8 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
 
     val presentableIcons by remember {
         derivedStateOf {
-            if (filtered) viewModel.icons.filter { icon -> icon.path.contains(".*$searchIcon.*".toRegex()) } else icons
+            val regexString = searchIcon?.replace("[^a-zA-Z0-9_\\s\\t\\n]".toRegex(), "")
+            if (filtered) viewModel.icons.filter { icon -> icon.path.contains(".*$regexString.*".toRegex()) } else icons
         }
     }
 
@@ -148,6 +149,7 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
                         Column(Modifier.width(iconsPreviewWidth)) {
 
                             var iconPreviewSize by remember { mutableStateOf(80) }
+                            var asIcon by remember { mutableStateOf(false) }
 
                             Row(
                                 Modifier.height(32.dp).fillMaxWidth().padding(horizontal = 8.dp),
@@ -156,6 +158,10 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
                             ) {
 
                                 var presetSizesShow by remember { mutableStateOf(false) }
+
+                                Switch(asIcon, {
+                                    asIcon = it
+                                })
 
                                 InputLayout(
                                     InputModifier.Default {
@@ -170,6 +176,7 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
                                         }
                                     }
                                 ) {
+
                                     Input(
                                         iconPreviewSize.toString(),
                                         modifier = Modifier.height(20.dp)
@@ -244,10 +251,10 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
                                     val iconModifier = Modifier.size(iconPreviewSize.dp).clickable(onClick = ::onPreviewClick)
 
                                     if (filtered) {
-                                        IconPreviewLayout(icon, iconModifier)
+                                        IconPreviewLayout(icon, iconModifier, asIcon)
                                     } else {
                                         if (index == icons.size - 1) viewModel.updateIconsState()
-                                        IconPreviewLayout(icon, iconModifier)
+                                        IconPreviewLayout(icon, iconModifier, asIcon)
                                     }
 
                                 }
@@ -257,7 +264,7 @@ fun IconsDisplayLayout(viewModel: IconsViewModel) {
                         }
 
                         currentIcon.compose { icon ->
-                            IconClassFileLayout(icon,iconContentWidth) {
+                            IconClassFileLayout(icon, iconContentWidth) {
                                 currentIcon = null
                             }
                         }

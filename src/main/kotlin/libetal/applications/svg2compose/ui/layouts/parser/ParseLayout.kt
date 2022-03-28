@@ -48,14 +48,14 @@ fun ParseLayout() {
         val svgState = remember {
             mutableStateOf(
                 """|$packageName
-               |
-               |import $packageName.$accessorName.$iconName
-               |
-               |object $accessorName
-               |
-               |val $accessorName.$allIcons = /*OTHER CODE GENERATED HERE*/ 
-               |
-            """.trimMargin()
+                   |
+                   |import $packageName.$accessorName.$iconName
+                   |
+                   |object $accessorName
+                   |
+                   |val $accessorName.$allIcons = /*OTHER CODE GENERATED HERE*/ 
+                   |
+                """.trimMargin()
             )
         }
 

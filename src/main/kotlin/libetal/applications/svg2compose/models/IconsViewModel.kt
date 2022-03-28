@@ -7,9 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.unit.Density
 import br.com.devsrsouza.svg2compose.Size
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import libetal.applications.svg2compose.convert
 import libetal.applications.svg2compose.data.Icon
 import libetal.kotlin.compose.narrator.lifecycle.ViewModel
@@ -74,10 +72,11 @@ class IconsViewModel : ViewModel() {
     override fun onStart() {
         super.onStart()
         Log.d("IconsViewModel", "Started...")
+        loadPath()
     }
 
     override fun onResume() {
-        loadPath()
+
     }
 
     var onScrapingFinish: () -> Unit = {
@@ -97,6 +96,7 @@ class IconsViewModel : ViewModel() {
             while (i < max && i < icons.size) {
                 iconsState.add(icons[i++])
             }
+
         }
 
     }
@@ -114,26 +114,28 @@ class IconsViewModel : ViewModel() {
         }
     }
 
-    fun File.getIcons() {
-        if (job != null) {
-            if (job?.isActive == true) {
-                if (isDirectory) {
+    suspend fun File.getIcons(): Unit = withContext(Dispatchers.IO) {
+        val isActive = job?.isActive ?: return@withContext Log.d(TAG, "Job is empty")
 
-                    if (path == "." || path == "..") return
+        if (isActive) {
+            if (isDirectory) {
 
-                    currentPath = path
+                if (path == "." || path == "..") return@withContext
 
-                    try {
-                        toPath().forEachDirectoryEntry {
+                try {
+                    toPath().forEachDirectoryEntry {
+                        launch(Dispatchers.IO) {
                             it.toFile().getIcons()
                         }
-                    } catch (e: java.nio.file.AccessDeniedException) {
-                        Log.d(TAG, "Access denied for $path")
                     }
+                } catch (e: java.nio.file.AccessDeniedException) {
+                    Log.d(TAG, "Access denied for $path")
+                }
 
-                } else {
-                    isSvg {
+            } else {
+                isSvg {
 
+                    launch(Dispatchers.IO) {
                         val stream = try {
                             val stream = inputStream()
                             if (stream.readAllBytes().isEmpty()) {
@@ -143,14 +145,14 @@ class IconsViewModel : ViewModel() {
                         } catch (e: java.nio.file.AccessDeniedException) {
                             Log.d(TAG, "File access denied $path")
                             null
-                        } ?: return Log.d(TAG, "Stream for $path is null")
+                        } ?: return@launch Log.d(TAG, "Stream for $path is null")
 
                         val painter = try {
                             loadSvgPainter(stream, Density(80f, 1f))
                         } catch (e: Exception) {
                             Log.d(TAG, "Failed to get painter")
                             null
-                        } ?: return Log.d(TAG, "Painter for $path is null")
+                        } ?: return@launch Log.d(TAG, "Painter for $path is null")
 
                         val icon = Icon(path, painter, stream)
 
@@ -159,7 +161,7 @@ class IconsViewModel : ViewModel() {
 
                             icons.add(icon)
 
-                            coroutineScope.launch(Dispatchers.Main) {
+                            launch(Dispatchers.Main) {
                                 if (iconsState.size < 10) {
                                     iconsState.add(icon)
                                 }
@@ -169,12 +171,13 @@ class IconsViewModel : ViewModel() {
                             Log.w(TAG, "Unsupported icon ${icon.path}", e)
                         }
 
-
                     }
 
                 }
-            } else Log.d(TAG, "Job was canceled")
-        } else Log.d(TAG, "Job is empty")
+
+            }
+        } else Log.d(TAG, "Job was canceled")
+
 
     }
 

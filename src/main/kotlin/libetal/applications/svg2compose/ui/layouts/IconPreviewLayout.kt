@@ -2,6 +2,7 @@ package libetal.applications.svg2compose.ui.layouts
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.mouseClickable
@@ -26,7 +27,7 @@ import libetal.libraries.compose.ui.shape
 
 @Composable
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
-fun IconPreviewLayout(icon: Icon, modifier: Modifier) {
+fun IconPreviewLayout(icon: Icon, modifier: Modifier, asIcon: Boolean = true) {
 
 
     var dropDownState by remember { mutableStateOf(false) }
@@ -48,7 +49,10 @@ fun IconPreviewLayout(icon: Icon, modifier: Modifier) {
                     verticalArrangement = Arrangement.SpaceBetween,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(icon.painter, "Description", modifier.fillMaxSize(0.5f))
+                    if (asIcon) {
+                        Icon(icon.painter, "Description", modifier.fillMaxSize(0.5f))
+                    } else Image(icon.painter, "Description", modifier.fillMaxSize(0.5f))
+
                 }
             }
         }
