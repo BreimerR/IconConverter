@@ -28,7 +28,7 @@ having that as a feature will be done later or already has been done.
 
 1. Be patient
 2. Close and restart
-3. Shut down your whole pc. Disconnect the from power. Shutdown mains and turn everything off it's over.
+3. Shut down your whole pc. Disconnect from power. Shutdown mains and turn everything off it's over.
 4. Download new version ()
 
 ## Features
