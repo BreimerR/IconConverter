@@ -13,7 +13,7 @@ import androidx.compose.ui.text.TextStyle
 
 
 @Composable
-fun SlectableText(text: String, style: TextStyle = MaterialTheme.typography.body1, modifier: Modifier = Modifier) {
+fun SelectableText(text: String, style: TextStyle = MaterialTheme.typography.body1, modifier: Modifier = Modifier) {
 
     val customTextSelectionColors = TextSelectionColors(
         handleColor = MaterialTheme.colors.onSecondary,

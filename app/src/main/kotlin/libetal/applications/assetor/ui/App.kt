@@ -22,7 +22,6 @@ import libetal.kotlin.compose.narrator.createScopeCollector
 import libetal.libraries.compose.layouts.IconButton
 
 @Composable
-@Preview
 fun Assetor(viewModel: MainViewModel) = AppTheme(viewModel.isDarkMode) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -57,7 +56,6 @@ fun Assetor(viewModel: MainViewModel) = AppTheme(viewModel.isDarkMode) {
                 Column(Modifier.width(containerSize).fillMaxHeight()) {
 
                     Narration<AppNarrations> {
-
 
                         AppNarrations.PARSER {
                             ParseLayout()

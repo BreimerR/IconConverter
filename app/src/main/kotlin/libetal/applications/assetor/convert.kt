@@ -6,7 +6,7 @@ import br.com.devsrsouza.svg2compose.Svg2Compose
 import br.com.devsrsouza.svg2compose.VectorType
 import java.io.File
 import kotlin.io.path.createTempDirectory
-import libetal.kotlin.debug.*
+import libetal.kotlin.log.error
 
 fun convert(
     type: VectorType,

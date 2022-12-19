@@ -6,8 +6,8 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.unit.Density
 import kotlinx.coroutines.*
-import libetal.kotlin.debug.info
-import libetal.kotlin.debug.warn
+import libetal.kotlin.log.info
+import libetal.kotlin.log.warn
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files.newDirectoryStream

@@ -16,11 +16,10 @@ import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.Copy
 import libetal.applications.assetor.convert
-import libetal.applications.assetor.ui.layouts.SlectableText
+import libetal.applications.assetor.ui.layouts.SelectableText
 import libetal.applications.assetor.utils.annotated
 import libetal.kotlin.compose.narrator.Narration
 import libetal.kotlin.compose.narrator.NarrationScopeImpl
-import libetal.kotlin.compose.narrator.collectedScope
 import libetal.kotlin.compose.narrator.createScopeCollector
 
 import libetal.libraries.compose.layouts.DropDownMenu
@@ -149,7 +148,7 @@ fun ParseLayout() {
                                 Spacer(modifier = Modifier.height(4.dp))
 
                                 for (error in errors) {
-                                    SlectableText(
+                                    SelectableText(
                                         error,
                                         style = MaterialTheme.typography.caption.copy(MaterialTheme.colors.onError),
                                         modifier = Modifier.wrapContentSize()
@@ -201,11 +200,11 @@ fun ParseLayout() {
                         Narration<ParserTabs> {
 
                             ParserTabs.ICON {
-                                SlectableText(svg, modifier = Modifier.wrapContentSize())
+                                SelectableText(svg, modifier = Modifier.wrapContentSize())
                             }
 
                             ParserTabs.ICONS {
-                                SlectableText(allIcons, modifier = Modifier.wrapContentSize())
+                                SelectableText(allIcons, modifier = Modifier.wrapContentSize())
                             }
 
                         }

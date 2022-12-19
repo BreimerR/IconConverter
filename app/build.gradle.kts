@@ -31,9 +31,10 @@ dependencies {
     implementation(compose.foundation)
     implementation(compose.desktop.currentOs)
 
+    implementation("libetal.libraries.kotlin:log-desktop:1.1.0")
     implementation("libetal.libraries.compose.layouts:text-desktop:1.0.0")
 
-    implementation("libetal.libraries.compose.layouts:icons-desktop:1.0.0")
+    implementation("libetal.libraries.compose.layouts:icons-desktop:1.0.1")
     implementation("libetal.libraries.compose.layouts:dropdown-desktop:1.0.0")
 
     implementation("libetal.libraries.compose.narrator:core-jvm-desktop:1.1.1610-ALPHA")
@@ -42,6 +43,7 @@ dependencies {
     implementation("com.squareup:kotlinpoet:1.12.0")
     implementation("br.com.devsrsouza:svg-to-compose:0.8.2")
     implementation("br.com.devsrsouza.compose.icons.jetbrains:font-awesome:1.0.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.6.4")
 
     testImplementation(kotlin("test"))
 

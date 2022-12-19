@@ -12,9 +12,7 @@ import kotlinx.coroutines.*
 import libetal.applications.assetor.convert
 import libetal.applications.assetor.data.Icon
 import libetal.kotlin.compose.narrator.lifecycle.ViewModel
-import libetal.kotlin.debug.debug
-import libetal.kotlin.debug.info
-import libetal.kotlin.debug.warn
+import libetal.kotlin.log.*
 import java.io.File
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.forEachDirectoryEntry
@@ -76,7 +74,7 @@ class IconsViewModel : ViewModel() {
         loadPath()
     }
 
-    override fun onStart() {
+     fun onStart() {
 
     }
 
