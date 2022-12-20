@@ -37,28 +37,39 @@ import libetal.libraries.compose.ui.shape
 fun ParseLayout(mainViewModel: MainViewModel) {
 
     val vScrollState = rememberScrollState()
-    val hScrollState = rememberScrollState()
     var inputSvg by remember { mutableStateOf<String?>(null) }
-    val allIconsState = remember { mutableStateOf("") }
-    val allIcons by allIconsState
 
     var resourcePath by remember { mutableStateOf<String?>(null) }
     var accessorName by remember { mutableStateOf<String?>(null) }
     var iconName by remember { mutableStateOf<String?>(null) }
     var packageName by remember { mutableStateOf<String?>(null) }
+    val safeIconName by derivedStateOf {
+        iconName ?: "Icons"
+    }
+    val safeAccessorName by derivedStateOf {
+        accessorName ?: "Example"
+    }
+
+    val safePackageName  by derivedStateOf {
+        packageName ?: "com.example"
+    }
+
+    val packageLine by derivedStateOf {
+        packageName?.let { "package $packageName" } ?: ""
+    }
 
     var svgString by remember {
         mutableStateOf(
-            """|import ${packageName ?: "com.example"}.${accessorName ?: "Icons"}.${iconName ?: "Example"}
+            """|import $safePackageName.$safeAccessorName.$safeIconName
                 |
-                |object $accessorName
+                |object $safeAccessorName
                 |
-                |val $accessorName.$allIcons = /*OTHER CODE GENERATED HERE*/
+                |val $safeAccessorName.$safeIconName = /*OTHER CODE GENERATED HERE*/
                 |""".trimMargin()
         )
     }
     val svgDerivedState = derivedStateOf {
-        """|${packageName?.let { "package $it" } ?: ""}
+        """|$packageLine
             |
             |$svgString
             |""".trimMargin()
