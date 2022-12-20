@@ -113,7 +113,7 @@ fun IconClassFileLayout(
 
                     Column(Modifier.fillMaxSize().verticalScroll(vScrollState).horizontalScroll(hScrollState)) {
 
-                        SelectableText(icon.composeClassFile, modifier = Modifier.wrapContentSize())
+                        SelectableText(icon.composeClassFile, textModifier = Modifier.wrapContentSize())
 
                     }
 

@@ -1,6 +1,7 @@
 package libetal.applications.assetor.ui.layouts
 
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -13,7 +14,12 @@ import androidx.compose.ui.text.TextStyle
 
 
 @Composable
-fun SelectableText(text: String, style: TextStyle = MaterialTheme.typography.body1, modifier: Modifier = Modifier) {
+fun SelectableText(
+    text: String,
+    style: TextStyle = MaterialTheme.typography.body1,
+    textModifier: Modifier = Modifier,
+    selectContainerModifier: Modifier = Modifier.wrapContentHeight().fillMaxWidth()
+) {
 
     val customTextSelectionColors = TextSelectionColors(
         handleColor = MaterialTheme.colors.onSecondary,
@@ -22,11 +28,11 @@ fun SelectableText(text: String, style: TextStyle = MaterialTheme.typography.bod
 
     CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
 
-        SelectionContainer(Modifier.wrapContentSize()) {
+        SelectionContainer(selectContainerModifier) {
             Text(
                 text,
                 style = style,
-                modifier = modifier
+                modifier = textModifier
             )
         }
 
