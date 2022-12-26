@@ -33,7 +33,7 @@ fun IconClassFileLayout(
     onCloseRequest: () -> Unit
 ) {
 
-    val viewModel: IconsViewModel = lifeCycleViewModel(AppNarrations.BROWSER)
+    val viewModel: IconsViewModel = lifeCycleViewModel(AppNarrations.FILE_EXPLORER)
 
     val packageName by remember { viewModel.iconPackageNameState }
     val iconReceiverName by remember { viewModel.iconReceiverNameState }

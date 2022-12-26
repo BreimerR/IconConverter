@@ -86,3 +86,38 @@ val String.snakeCase: String
 
         return result
     }
+
+
+val String.camelCase: String
+    get() = buildString {
+        var new = false
+        this@camelCase.forEachIndexed { i, char ->
+            val toAppend = if (new) {
+                new = false
+                char.uppercaseChar()
+            } else if (char == '-' || char == '_') {
+                new = true
+                null
+            } else char
+
+            toAppend?.let(::append)
+        }
+
+    }
+
+
+val String.titleCase: String
+    get() = buildString {
+        var new = true
+        this@titleCase.forEachIndexed { i, char ->
+            val toAppend = if (new) {
+                new = false
+                char.uppercaseChar()
+            } else if (char == ' ') {
+                new = true
+                char
+            } else char
+
+            append(toAppend)
+        }
+    }

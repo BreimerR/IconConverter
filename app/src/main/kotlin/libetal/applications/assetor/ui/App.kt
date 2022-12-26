@@ -22,28 +22,16 @@ fun Assetor(viewModel: MainViewModel) = AppTheme(viewModel.isDarkMode) {
         color = MaterialTheme.colors.background
     ) {
 
-        val scope by createScopeCollector<NarrationScopeImpl<AppNarrations>>()
+        Column(Modifier.fillMaxSize()) {
 
-        BoxWithConstraints {
-            val navSize = 48.dp
-            val containerSize = maxWidth - navSize
+            Narration<AppNarrations> {
 
-            Column(Modifier.fillMaxSize()) {
+                AppNarrations.PARSER {
+                    ParseLayout(viewModel)
+                }
 
-                Column(Modifier.fillMaxSize()) {
-
-                    Narration<AppNarrations> {
-
-                        AppNarrations.PARSER {
-                            ParseLayout(viewModel)
-                        }
-
-                        AppNarrations.BROWSER(this, { IconsViewModel() }) { viewModel ->
-                            IconsDisplayLayout(viewModel)
-                        }
-
-                    }
-
+                AppNarrations.FILE_EXPLORER(this, { IconsViewModel() }) { viewModel ->
+                    IconsDisplayLayout(viewModel)
                 }
 
             }
