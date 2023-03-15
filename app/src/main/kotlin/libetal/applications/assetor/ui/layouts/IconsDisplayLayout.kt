@@ -2,6 +2,8 @@ package libetal.applications.assetor.ui.layouts
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -10,267 +12,282 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.LayoutModifier
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.unit.*
 import compose.icons.FontAwesomeIcons
-import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.regular.Folder
-import compose.icons.fontawesomeicons.solid.Minus
-import compose.icons.fontawesomeicons.solid.Plus
+import compose.icons.fontawesomeicons.solid.ArrowRight
+import compose.icons.fontawesomeicons.solid.CaretDown
 import compose.icons.fontawesomeicons.solid.Search
-import compose.icons.fontawesomeicons.solid.Times
-import libetal.applications.assetor.data.Icon
+import libetal.applications.assetor.models.FolderViewModel
+import libetal.applications.assetor.models.IconViewModel
 import libetal.applications.assetor.models.IconsViewModel
-import libetal.applications.assetor.ui.utils.compose
+import libetal.applications.assetor.ui.components.NavigationDropDown
 import libetal.applications.assetor.ui.icons.Assetor
-import libetal.applications.assetor.ui.icons.Resize24
-import libetal.libraries.compose.layouts.DropdownMenuItem
-import libetal.libraries.compose.layouts.SizeIn
+import libetal.applications.assetor.ui.icons.IcFolder
+import libetal.applications.assetor.ui.icons.Settings
+import libetal.applications.assetor.ui.icons.ThemeMode
+import libetal.libraries.compose.layouts.DropDownMenu
 import libetal.libraries.compose.layouts.IconButton
 import libetal.libraries.compose.layouts.text.Input
-import libetal.libraries.compose.layouts.text.InputLayout
-import libetal.libraries.compose.layouts.text.InputModifier
 import libetal.libraries.compose.ui.shape
+
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-fun IconsDisplayLayout(viewModel: IconsViewModel) {
+fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewModel) = Column(
+    modifier = Modifier.fillMaxSize()
+) {
 
-    var searchIcon by remember {
-        mutableStateOf<String?>(null)
+    var path by remember { viewModel.pathState }
+    val icons = remember {
+        mutableStateListOf<IconViewModel>()
+    }
+    val folders = remember { mutableStateListOf<FolderViewModel<IconViewModel>>() }
+    val lastItem = remember {
+        derivedStateOf {
+            folders.lastOrNull()
+        }
+    }
+    val painters = remember { viewModel.painters }
+    var showSearchField by remember { mutableStateOf(false) }
+    var iconSearch by remember { mutableStateOf<String?>(null) }
+    val showResources = remember { mutableStateOf(false) }
+
+    fun toggleShowResources() {
+        showResources.value = !showResources.value
     }
 
-    val scraping by remember { viewModel.scrapingState }
+    BoxWithConstraints(Modifier.fillMaxWidth().height(54.dp)) {
+        val inputAreaWidth = maxWidth - 64.dp
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            val inputContainerModifier = Modifier.fillMaxHeight().width(inputAreaWidth)
 
-    val filtered by remember { derivedStateOf { searchIcon != null } }
 
-    val icons = remember { viewModel.iconsState }
+            Row(
+                inputContainerModifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    Modifier.fillMaxSize().shape(RoundedCornerShape(50)).padding(end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        Modifier.fillMaxHeight()
+                            .clickable(onClick = ::toggleShowResources)
+                            .background(
+                                MaterialTheme.colors.onBackground.copy(.2f),
+                                RoundedCornerShape(
+                                    percent = 50, RoundedCornerShapeDirections.START
+                                )
+                            )
+                            .roundedCornerHorizontalPadding(end = false).padding(end = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Resources")
+                        Icon(FontAwesomeIcons.Solid.CaretDown, "Search Directories", Modifier.size(24.dp))
+                        NavigationDropDown(showResources)
+                    }
+                    Divider(Modifier.fillMaxHeight(.8f).width(1.dp).background(MaterialTheme.colors.onBackground))
+                    BoxWithConstraints(Modifier.fillMaxWidth().padding(start = 4.dp)) {
+                        if (!showSearchField) {
+                            Input(
+                                path,
+                                "/Example/Dir/Pictures",
+                                singleLine = true,
+                                containerModifier = Modifier.width(maxWidth - 64.dp).align(Alignment.CenterStart)
+                            ) { newPath ->
+                                path = newPath
+                            }
+                        } else {
+                            Input(
+                                iconSearch ?: "",
+                                "ic_icon_name",
+                                singleLine = true,
+                                containerModifier = Modifier.width(maxWidth - 64.dp).align(Alignment.CenterStart)
+                            ) { newIconSerch ->
+                                iconSearch = newIconSerch
+                            }
+                        }
+                        Row(
+                            modifier = Modifier.align(Alignment.CenterEnd)
+                        ) {
+                            AnimatedVisibility(!showSearchField) {
+                                IconButton(
+                                    FontAwesomeIcons.Solid.ArrowRight, iconSize = 32, modifier = Modifier
+                                ) {
+                                    folders.clear()
+                                    viewModel.explore(folders)
+                                    folders.firstOrNull()?.getAll(icons)
+                                }
+                            }
 
-    val presentableIcons by remember {
-        derivedStateOf {
-            val regexString = searchIcon?.replace("[^a-zA-Z0-9_\\s\\t\\n]".toRegex(), "")
-            if (filtered) viewModel.icons.filter { icon -> icon.path.contains(".*$regexString.*".toRegex()) } else icons
+                            IconButton(
+                                FontAwesomeIcons.Solid.Search, iconSize = 32, modifier = Modifier
+                            ) {
+                                showSearchField = !showSearchField
+                            }
+                        }
+                    }
+                }
+            }
+
+            IconButton(Assetor.ThemeMode, iconSize = 32) {
+                themeMode.value = !themeMode.value
+            }
+
+            IconButton(Assetor.Settings, iconSize = 32) {
+
+            }
+
+
         }
     }
 
-    var currentIcon by remember { mutableStateOf<Icon?>(null) }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val drawerWidth = 240.dp
+        var iconSize by remember { mutableStateOf(80) }
+        val maxExplorerWidth = max(min(folders.size * iconSize.dp, maxWidth * 0.5f), iconSize.dp)
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(4.dp)) {
-        val iconSize = 36
-        val toolBarHeight = 56.dp
-        val contentHeight = maxHeight - toolBarHeight
+        Column(Modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxWidth().fillMaxHeight(0.4f)) {
 
-        Column(modifier = Modifier.fillMaxSize()) {
-            Row(modifier = Modifier.height(toolBarHeight).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colors.onBackground) {
-
-                    BoxWithConstraints(Modifier.height(iconSize.dp).fillMaxWidth(0.4f)) {
-
-                        val showClear by remember { derivedStateOf { searchIcon != null } }
-
-                        val inputWidth = maxWidth - (iconSize.dp * if (showClear) 2 else 1)
-
-                        InputLayout(
-                            InputModifier.Default {
-                                Modifier.height(iconSize.dp)
-                                    .shape(RoundedCornerShape(50), MaterialTheme.colors.secondary, 2.dp)
-                                    .padding(start = 2.dp, end = 2.dp)
-                            }(verticalAlignment = Alignment.CenterVertically)
-                        ) {
-                            IconButton(
-                                FontAwesomeIcons.Solid.Search,
-                                iconSize,
-                                contentDescription = "Search Icon"
-                            ) {
-
-                            }
-
-                            Input(
-                                searchIcon ?: "",
-                                placeHolder = "Search Icon",
-                                modifier = Modifier.wrapContentHeight().width(inputWidth),
-                            ) {
-                                if (!scraping) searchIcon = it.trim().ifBlank { null }
-                            }
-
-                            AnimatedVisibility(showClear) {
-                                IconButton(
-                                    FontAwesomeIcons.Solid.Times,
-                                    iconSize,
-                                    contentDescription = "Clear Text"
-                                ) {
-                                    if (!scraping) searchIcon = null
-                                }
-                            }
-
-                        }
-                    }
-                    Spacer(Modifier.width(4.dp))
-
-                    InputLayout(
-                        InputModifier.Default {
-                            Modifier.fillMaxWidth()
-                                .height(iconSize.dp)
-                                .shape(RoundedCornerShape(50), color = MaterialTheme.colors.secondary)
-                                .padding(horizontal = 4.dp)
-                        }
-                    ) { it ->
-
-                        var directory by remember { viewModel.path }
-
-                        IconButton(FontAwesomeIcons.Regular.Folder, iconSize, contentDescription = "Current Folder") {
-
-                        }
-
-                        Input(
-                            directory,
-                            placeHolder = "Search Icon",
-                            modifier = it.fillMaxWidth()
-                        ) {
-                            directory = it.trim().ifBlank { "" }
-                        }
+                Column(Modifier.width(maxExplorerWidth).fillMaxHeight()) {
+                    Row(Modifier.fillMaxWidth().height(56.dp)) {
 
                     }
-
+                    LazyRow(Modifier.fillMaxSize()) {
+                        itemsIndexed(folders) { i, folderViewModel ->
+                            folderViewModel.previewFolderViewModel(iconSize.dp)
+                        }
+                    }
                 }
-            }
 
-            Row(modifier = Modifier.height(contentHeight).fillMaxWidth()) {
-
-                BoxWithConstraints(Modifier.fillMaxSize()) {
-                    val iconsPreviewWidth: Dp = if (currentIcon == null) maxWidth
-                    else 240.dp
-
-                    val iconContentWidth: Dp = maxWidth - iconsPreviewWidth
-
-                    Row(Modifier.fillMaxSize()) {
-                        Column(Modifier.width(iconsPreviewWidth)) {
-
-                            var iconPreviewSize by remember { mutableStateOf(80) }
-                            var asIcon by remember { mutableStateOf(false) }
-
-                            Row(
-                                Modifier.height(32.dp).fillMaxWidth().padding(horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.End
-                            ) {
-
-                                var presetSizesShow by remember { mutableStateOf(false) }
-
-                                Switch(asIcon, {
-                                    asIcon = it
-                                })
-
-                                InputLayout(
-                                    InputModifier.Default {
-                                        height(28.dp)
-                                            .width(90.dp)
-                                            .shape(RoundedCornerShape(50), MaterialTheme.colors.secondary, 2.dp)
-                                            .padding(horizontal = 8.dp)
-                                    }(verticalAlignment = Alignment.CenterVertically),
-                                    {
-                                        IconButton(Assetor.Resize24) {
-                                            presetSizesShow = !presetSizesShow
-                                        }
-                                    }
-                                ) {
-
-                                    Input(
-                                        iconPreviewSize.toString(),
-                                        modifier = Modifier.height(20.dp)
-                                    ) {
-                                        it.trim().ifEmpty { null }?.toIntOrNull()?.let { size ->
-                                            iconPreviewSize = when {
-                                                size > 4 -> if (size <= 240) size else 240
-                                                else -> 4
-                                            }
-                                        }
-                                    }
-
-                                    DropdownMenu(presetSizesShow, {
-                                        presetSizesShow = false
-                                    }) {
-                                        LazyColumn(modifier = Modifier.width(120.dp).height(120.dp).padding(2.dp)) {
-                                            items(
-                                                arrayOf(
-                                                    4, 16, 20, 24, 28, 32, 48
-                                                )
-                                            ) { newSize ->
-                                                Column(Modifier.wrapContentSize().padding(vertical = 2.dp)) {
-                                                    DropdownMenuItem(
-                                                        {
-                                                            iconPreviewSize = newSize
-                                                        },
-                                                        sizeIn = MenuDefaults.SizeIn.copy(minHeight = 32.dp),
-                                                        modifier = {
-                                                            shape(RoundedCornerShape(50))
-                                                        }
-                                                    ) {
-                                                        Text("$newSize")
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Spacer(Modifier.width(2.dp))
-
-                                IconButton(FontAwesomeIcons.Solid.Plus, 24, contentDescription = "Increase icon Size") {
-                                    val newSize = iconPreviewSize + 2
-                                    iconPreviewSize = if (newSize > 240) 240 else newSize
-                                }
-
-                                Spacer(Modifier.width(2.dp))
-
-                                IconButton(FontAwesomeIcons.Solid.Minus, 24, contentDescription = "Decrease Icon Size") {
-                                    val newSize = iconPreviewSize - 2
-
-                                    iconPreviewSize = if (newSize < 4) 4 else newSize
-
-                                }
-
+                AnimatedVisibility(lastItem.value != null) {
+                    val subFolders by remember {
+                        derivedStateOf {
+                            lastItem.value!!.subFolders
+                        }
+                    }
+                    Column(Modifier.fillMaxSize()) {
+                        Row(Modifier.fillMaxWidth().height(56.dp)) {
+                            var iconSizeState by remember { mutableStateOf(false) }
+                            Button({ iconSizeState = !iconSizeState }) {
+                                Text("Icon size: $iconSize")
                             }
-
-
-                            val scrollState = rememberLazyListState()
-
-                            LazyVerticalGrid(
-                                GridCells.Adaptive(iconPreviewSize.dp),
-                                state = scrollState,
-                                modifier = Modifier.fillMaxSize(),
-                            ) {
-
-                                itemsIndexed(presentableIcons) { index, icon ->
-                                    fun onPreviewClick() {
-                                        currentIcon = icon
-                                    }
-
-                                    val iconModifier = Modifier.size(iconPreviewSize.dp).clickable(onClick = ::onPreviewClick)
-
-                                    if (filtered) {
-                                        IconPreviewLayout(icon, iconModifier, asIcon)
-                                    } else {
-                                        if (index == icons.size - 1) viewModel.updateIconsState()
-                                        IconPreviewLayout(icon, iconModifier, asIcon)
-                                    }
-
+                            DropDownMenu(expanded = iconSizeState, { iconSizeState = false }) {
+                                libetal.libraries.compose.layouts.DropdownMenuItem({
+                                    iconSizeState = !iconSizeState
+                                    iconSize = 80
+                                }) {
+                                    Text("80")
                                 }
-
+                                libetal.libraries.compose.layouts.DropdownMenuItem({
+                                    iconSizeState = !iconSizeState
+                                    iconSize = 100
+                                }) {
+                                    Text("100")
+                                }
+                                libetal.libraries.compose.layouts.DropdownMenuItem({
+                                    iconSizeState = !iconSizeState
+                                    iconSize = 120
+                                }) {
+                                    Text("120")
+                                }
                             }
-
+                        }
+                        LazyVerticalGrid(
+                            GridCells.Adaptive(iconSize.dp),
+                            Modifier.fillMaxSize().background(Color.Black.copy(.6f))
+                        ) {
+                            items(subFolders) { fVm ->
+                                fVm.previewFolderViewModel(iconSize.dp)
+                            }
                         }
 
-                        currentIcon.compose { icon ->
-                            IconClassFileLayout(icon, iconContentWidth) {
-                                currentIcon = null
-                            }
+                    }
+                }
+
+            }
+            
+            LazyVerticalGrid(cells = GridCells.Adaptive(minSize = 62.dp), Modifier.fillMaxSize()) {
+                items(icons) { iconViewModel ->
+                    val painter by remember { iconViewModel.painter }
+                    Column(Modifier.padding(2.dp)) {
+                        AnimatedVisibility(painter != null) {
+                            Icon(painter!!, "Icon Name", modifier = Modifier.size(56.dp))
                         }
                     }
                 }
             }
 
+        }
+    }
+
+}
+
+
+enum class RoundedCornerShapeDirections {
+    START, END
+}
+
+fun RoundedCornerShape(percent: Int, direction: RoundedCornerShapeDirections) = when (direction) {
+    RoundedCornerShapeDirections.START -> RoundedCornerShape(
+        topStartPercent = percent, bottomStartPercent = percent
+    )
+
+    RoundedCornerShapeDirections.END -> RoundedCornerShape(
+        topEndPercent = percent, bottomEndPercent = percent
+    )
+}
+
+@Composable
+fun Modifier.roundedCornerHorizontalPadding(start: Boolean = true, end: Boolean = true) = this.then(
+    RoundedCornerHorizontalModifier(start, end)
+)
+
+class RoundedCornerHorizontalModifier(val start: Boolean, val end: Boolean) : LayoutModifier {
+
+    override fun MeasureScope.measure(
+        measurable: Measurable, constraints: Constraints
+    ): MeasureResult {
+
+        val initialPlaceable = measurable.measure(constraints)
+
+        val initialHeight = initialPlaceable.height
+        val paddingSpace = initialHeight / 2
+        val horizontal = when {
+            start && end -> initialHeight
+            start || end -> paddingSpace
+            else -> initialHeight
+        }
+
+
+        val placeable = measurable.measure(constraints.offset(-horizontal, 0))
+
+        val width = constraints.constrainWidth(placeable.width + horizontal)
+        val height = constraints.constrainHeight(placeable.height)
+        return layout(width, height) {
+            when {
+                start && end -> placeable.placeRelative(paddingSpace, 0)
+                start -> placeable.placeRelative(paddingSpace, 0)
+                end -> placeable.placeRelative(0, 0)
+            }
         }
     }
 }
+
+
+@Composable
+fun <T : Any> FolderViewModel<T>.previewFolderViewModel(iconSize: Dp) =
+    Column(Modifier.sizeIn(maxWidth = iconSize), horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(Assetor.IcFolder, path, Modifier.clickable {
+            onClick()
+        }.fillMaxWidth(0.6f))
+        Spacer(Modifier.height(2.dp))
+        Text(name)
+    }

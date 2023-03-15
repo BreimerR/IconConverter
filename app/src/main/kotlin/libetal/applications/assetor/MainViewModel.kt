@@ -6,6 +6,6 @@ import androidx.compose.runtime.setValue
 import libetal.kotlin.compose.narrator.lifecycle.ViewModel
 
 class MainViewModel : ViewModel() {
-    private val isDarkModeState = mutableStateOf(true)
+    val isDarkModeState = mutableStateOf(true)
     var isDarkMode by isDarkModeState
 }

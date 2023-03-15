@@ -1,234 +1,130 @@
 package libetal.applications.assetor.models
 
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.loadSvgPainter
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.Density
-import br.com.devsrsouza.svg2compose.Size
-import br.com.devsrsouza.svg2compose.VectorType
-import kotlinx.coroutines.*
-import libetal.applications.assetor.convert
-import libetal.applications.assetor.data.Icon
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import libetal.kotlin.compose.narrator.lifecycle.ViewModel
-import libetal.kotlin.log.*
-import java.io.File
-import kotlin.io.path.createTempDirectory
-import kotlin.io.path.forEachDirectoryEntry
+import libetal.kotlin.io.File
+import libetal.kotlin.io.exists
+import libetal.kotlin.laziest
+import libetal.kotlin.log.info
+import libetal.libraries.compose.painter.loadSvgPainter
 
 class IconsViewModel : ViewModel() {
 
-    var job: Job? = null
+    val pathState by laziest {
+        mutableStateOf(System.getProperty("user.home")!!)
+    }
 
-    val path = mutableStateOf(System.getProperty("user.home") ?: "")
+    val extensions = mutableListOf("svg")
 
-    var scrapingState = mutableStateOf(false)
+    val folders by laziest {
+        mutableStateListOf<String>()
+    }
 
-    var regenerationJob: Job? = null
+    val painters by laziest {
+        mutableStateListOf<Painter>()
+    }
 
-    val iconPackageNameState = mutableStateOf("libetal.applications.assetor")
+    val maxThreads = 4
+    var threads = 0
 
-    var iconPackageName
-        get() = iconPackageNameState.value
+    var path
+        get() = pathState.value
         set(value) {
-            iconPackageNameState.value = value
-
-            regenerationJob?.cancel()
-
-            regenerationJob = coroutineScope.launch(Dispatchers.IO) {
-                iconsState.forEach { icon ->
-                    icon.composeClassFile = icon.convert()
-                }
-            }
-
+            pathState.value = value
         }
 
-    val iconReceiverNameState = mutableStateOf("Icons")
+    private var searchCoroutine = mutableListOf<Job>()
 
-    /*Scraping state might affect this but not yet */
-    var iconReceiverName
-        get() = iconReceiverNameState.value
-        set(value) {
-            iconReceiverNameState.value = value
+    /**TODO:
+     * When you click explore
+     * browse for icons in the current path as root
+     * On click of a folder explore its child folders and set it
+     * as current active folder
+     * on click of a child folder set that as current active folder and it's child folders should
+     * appear on the right of the screen.
+     *
+     * On click on an old state we need to clear all states in front of the current folder and show just the child
+     * folders of the current selected folder.
+     * */
 
-            regenerationJob?.cancel()
+    fun explore(foldersViewModelBackStack: SnapshotStateList <FolderViewModel<IconViewModel>>) {
+        clearSearch()
+        TAG info "Searching"
 
-            regenerationJob = coroutineScope.launch(Dispatchers.IO) {
-                iconsState.forEach { icon ->
-                    icon.composeClassFile = icon.convert()
-                }
-            }
-
-        }
-
-    var scraping by scrapingState
-
-    var currentPath: String = path.value
-
-    val iconsState = mutableStateListOf<Icon>()
-
-    val icons = mutableListOf<Icon>()
-
-    override fun onCreate() {
-        loadPath()
-    }
-
-     fun onStart() {
-
-    }
-
-    override fun onResume() {
-
-    }
-
-    var onScrapingFinish: () -> Unit = {
-        TAG info "Done scraping"
-    }
-
-    fun updateIconsState(chunkSize: Int = 10) {
-
-        if (scraping) onScrapingFinish = {
-            updateIconsState(chunkSize)
-        } else {
-
-            TAG info "Updating icons = ${icons.size} = Icons state= ${iconsState.size}"
-            var i = iconsState.size
-            val max = i + chunkSize
-
-            while (i < max && i < icons.size) {
-                iconsState.add(icons[i++])
-            }
-
-        }
-
-    }
-
-    private fun loadPath() {
-        job = coroutineScope.launch(Dispatchers.IO) {
-            val path = currentPath.trim().ifBlank { null }
-
-            path?.let { activePath ->
-                launch(Dispatchers.Main) {
-                    scraping = true
-                }
-                File(activePath).getIcons()
-                onScrapingFinish()
-                launch(Dispatchers.Main) {
-                    scraping = false
-                }
+        val folderViewModel = FolderViewModel(path, foldersViewModelBackStack) {
+            when (it.extension) {
+                "svg" -> IconViewModel(it)
+                else -> null
             }
         }
+        foldersViewModelBackStack.add(folderViewModel)
     }
 
-    suspend fun File.getIcons(): Unit = withContext(Dispatchers.IO) {
-        val isActive = job?.isActive ?: return@withContext TAG info "Job is empty"
 
-        if (isActive) {
-            if (isDirectory) {
+    fun explore(path: String) = ioLaunch {
+        explorePath(path) {
+            ioLaunch(
+                when (it.extension) {
+                    "svg" -> suspend {
+                        TAG info "Adding a ${it.path}"
 
-                if (path == "." || path == "..") return@withContext
+                        val painter = loadSvgPainter(it, Density(24f))
 
-                try {
-                    toPath().forEachDirectoryEntry {
-                        launch(Dispatchers.IO) {
-                            it.toFile().getIcons()
+                        launch {
+                            TAG info "Adding a painter"
+                            painters += painter
                         }
+                        Unit
                     }
-                } catch (e: java.nio.file.AccessDeniedException) {
-                    TAG debug "Access denied for $path"
-                }
 
-            } else {
-                isSvg {
-
-                    launch(Dispatchers.IO) {
-                        val stream = try {
-                            val stream = inputStream()
-                            if (stream.readAllBytes().isEmpty()) {
-                                TAG debug "File is empty $path"
-                                null
-                            } else inputStream()
-                        } catch (e: java.nio.file.AccessDeniedException) {
-                            TAG info "File access denied $path"
-                            null
-                        } catch(e: java.io.FileNotFoundException){
-                            null
-                        } ?: return@launch TAG debug "Stream for $path is null"
-
-                        val painter = try {
-                            loadSvgPainter(stream, Density(80f, 1f))
-                        } catch (e: Exception) {
-                            TAG debug "Failed to get painter"
-                            null
-                        } ?: return@launch TAG debug "Painter for $path is null"
-
-                        val icon = Icon(path, painter, stream)
-
-                        try {
-                            icon.composeClassFile = icon.convert(size = Size(24))
-
-                            icons.add(icon)
-
-                            launch(Dispatchers.Main) {
-                                if (iconsState.size < 10) {
-                                    iconsState.add(icon)
-                                }
-                            }
-
-                        } catch (e: Exception) {
-                            warn(TAG, "Unsupported icon ${icon.path}", e)
-                        }
+                    "png" -> suspend {
 
                     }
 
+                    else -> throw RuntimeException("This can never happend")
                 }
-
-            }
-        } else TAG debug "Job was canceled"
-
-
-    }
-
-    private inline fun File.isSvg(action: () -> Unit) {
-        path.trim().ifBlank { null }?.split("/")?.let { sections ->
-            if (sections.last().lowercase().split('.').last() == "svg") {
-                action()
-            }
-        }
-    }
-
-    override fun onDestroy() {
-        iconsState.clear()
-        icons.clear()
-        currentPath = path.value
-
-    }
-
-    val tempDir by lazy {
-        createTempDirectory("ic_converter").toFile()
-    }
-
-    fun convert(
-        currentIcon: Icon,
-        receiverName: String = iconReceiverName,
-        packageName: String = "com.example",
-        size: Size? = null,
-        onComplete: (String) -> Unit
-    ) {
-        coroutineScope.launch {
-            onComplete(
-                currentIcon.convert(
-                    receiverName,
-                    packageName,
-                    size
-                )
             )
+
         }
     }
 
-    fun Icon.convert(receiverName: String = iconReceiverName, packageName: String = iconPackageName, size: Size? = null) =
-        File(path).convert(VectorType.SVG, tempDir, receiverName, packageName, size)
+    fun explorePath(path: String, onFile: suspend (File) -> Unit): Job? {
+        val file = File(path)
+        if (!file.exists) return null
+
+        TAG info "FileName = ${file.name}"
+        return if (file.isFile && file.extension in extensions) {
+            ioLaunch {
+                onFile(file)
+            }
+            null
+        } else {
+            ioLaunch {
+                while (threads >= maxThreads) delay(1000)
+                threads += 1
+                file.listFiles()?.forEach { child ->
+                    folders.add(child.path)
+                }
+            }
+        }
+    }
+
+
+    private fun clearSearch() {
+        searchCoroutine.forEach {
+            it.cancel(CancellationException("New Search initiated"))
+        }
+
+        searchCoroutine.clear()
+    }
+
 
     companion object {
         const val TAG = "IconsViewModel"

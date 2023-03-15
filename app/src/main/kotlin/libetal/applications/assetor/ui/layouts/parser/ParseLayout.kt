@@ -19,6 +19,7 @@ import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.Copy
 import libetal.applications.assetor.*
 import libetal.applications.assetor.ui.AppNarrations
+import libetal.applications.assetor.ui.components.NavigationDropDown
 import libetal.applications.assetor.ui.icons.*
 import libetal.applications.assetor.ui.layouts.SelectableText
 import libetal.applications.assetor.utils.annotated
@@ -104,12 +105,12 @@ fun ParseLayout(mainViewModel: MainViewModel) {
                     .applySharedHeaderInputStyle()
                     .padding(horizontal = 16.dp, vertical = 4.dp)
 
-            var showSelectResource by remember { mutableStateOf(false) }
+            val showSelectResource = remember { mutableStateOf(false) }
 
             InputLayout(resourceModifier) {
                 Row(
                     Modifier.fillMaxHeight().shape(RoundedCornerShape(topStart = 25f, bottomStart = 25f)).clickable {
-                        showSelectResource = !showSelectResource
+                        showSelectResource.value = !showSelectResource.value
                     }.padding(start = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -117,31 +118,7 @@ fun ParseLayout(mainViewModel: MainViewModel) {
                     Spacer(Modifier.width(4.dp))
                     Icon(Assetor.ArrowDown, "Show Resources")
 
-                    DropDownMenu(showSelectResource, { showSelectResource = !showSelectResource }) {
-                        Column(modifier = Modifier.padding(4.dp)) {
-
-                            val browserNarrative = AppNarrations.FILE_EXPLORER.narrative
-
-                            DropdownMenuItem({
-                                browserNarrative.narrate()
-                            }) {
-                                Text("Remote")
-                            }
-
-                            DropdownMenuItem({
-                                TODO("Navigate To Free pik")
-                            }) {
-                                Text("FreePik")
-                            }
-
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                IconButton(Assetor.Settings, 32, "") {
-                                    TODO("Navigate to resources settings")
-                                }
-                            }
-
-                        }
-                    }
+                    NavigationDropDown(showSelectResource)
                 }
                 Spacer(Modifier.width(4.dp))
                 BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
