@@ -5,9 +5,10 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -24,15 +25,12 @@ import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.ArrowRight
 import compose.icons.fontawesomeicons.solid.CaretDown
 import compose.icons.fontawesomeicons.solid.Search
-import libetal.applications.assetor.models.FolderViewModel
-import libetal.applications.assetor.models.IconViewModel
 import libetal.applications.assetor.models.IconsViewModel
 import libetal.applications.assetor.ui.components.NavigationDropDown
 import libetal.applications.assetor.ui.icons.Assetor
 import libetal.applications.assetor.ui.icons.IcFolder
 import libetal.applications.assetor.ui.icons.Settings
 import libetal.applications.assetor.ui.icons.ThemeMode
-import androidx.compose.foundation.lazy.itemsIndexed
 import libetal.kotlin.io.File
 import libetal.kotlin.log.info
 import libetal.libraries.compose.layouts.DropDownMenu
@@ -41,10 +39,9 @@ import libetal.libraries.compose.layouts.text.Input
 import libetal.libraries.compose.ui.shape
 
 
-val TAG = "IconsDisplayLayout"
+const val TAG = "IconsDisplayLayout"
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
 fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewModel) = Column(
     modifier = Modifier.fillMaxSize()
 ) {
@@ -198,26 +195,23 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
                             Button({ iconSizeState = !iconSizeState }) {
                                 Text("Icon size: $iconSize")
                             }
-                            Text("Current Folder = ${currentRootFolderState.value}")
                             DropDownMenu(expanded = iconSizeState, { iconSizeState = false }) {
-                                libetal.libraries.compose.layouts.DropdownMenuItem({
-                                    iconSizeState = !iconSizeState
-                                    iconSize = 80
-                                }) {
-                                    Text("80")
+                                val padding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                val sizes = listOf(48, 52, 80, 100, 120)
+
+                                for (size in sizes) {
+                                    DropdownMenuItem(
+                                        {
+                                            iconSizeState = !iconSizeState
+                                            iconSize = size
+                                        },
+                                        contentPadding = padding,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("$size")
+                                    }
                                 }
-                                libetal.libraries.compose.layouts.DropdownMenuItem({
-                                    iconSizeState = !iconSizeState
-                                    iconSize = 100
-                                }) {
-                                    Text("100")
-                                }
-                                libetal.libraries.compose.layouts.DropdownMenuItem({
-                                    iconSizeState = !iconSizeState
-                                    iconSize = 120
-                                }) {
-                                    Text("120")
-                                }
+
                             }
                         }
 
@@ -225,7 +219,6 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
                     }
                 }
                 // TODO: Show Current Icon preview here
-
             }
 
             LazyVerticalGrid(
@@ -240,7 +233,10 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
                     val painter by remember { iconViewModel.painter }
                     Column(Modifier.padding(2.dp)) {
                         AnimatedVisibility(painter != null) {
-                            Icon(painter!!, iconViewModel.name, modifier = Modifier.size(56.dp))
+                            when (val iconPainter = painter) {
+                                null -> TAG info "Painter is still empty"
+                                else -> Icon(iconPainter, iconViewModel.name, modifier = Modifier.size(iconSize.dp))
+                            }
                         }
                     }
                 }

@@ -37,8 +37,8 @@ dependencies {
     implementation("libetal.libraries.compose.layouts:icons-desktop:1.0.1")
     implementation("libetal.libraries.compose.layouts:dropdown-desktop:1.0.0")
 
-    implementation("libetal.libraries.compose.narrator:core-jvm-desktop:1.1.1610-ALPHA")
-    implementation("libetal.libraries.compose.narrator:lifecycle-aware-desktop:1.1.1610-ALPHA")
+    implementation("libetal.libraries.compose.narrator:core-jvm-desktop:1.1.1611-ALPHA")
+    implementation("libetal.libraries.compose.narrator:lifecycle-aware-desktop:1.1.1611-ALPHA")
 
     implementation("com.squareup:kotlinpoet:1.12.0")
     implementation("br.com.devsrsouza:svg-to-compose:0.8.2")

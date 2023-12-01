@@ -3,6 +3,7 @@ package libetal.applications.assetor.models
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.Job
+import libetal.applications.assetor.ui.utils.mutableStateSetOf
 import libetal.kotlin.compose.narrator.lifecycle.ViewModel
 import libetal.kotlin.io.File
 import libetal.kotlin.laziest
@@ -23,8 +24,6 @@ class IconsViewModel(initialPath: String = System.getProperty("user.home")!!) : 
     }
 
     val folders by laziest {
-
-
         if (file.isDirectory)
             mutableStateListOf(
                 File(path)
@@ -34,7 +33,7 @@ class IconsViewModel(initialPath: String = System.getProperty("user.home")!!) : 
     }
 
     val painters by laziest {
-        mutableStateListOf<IconViewModel>()
+        mutableStateSetOf<IconViewModel>()
     }
 
     var path

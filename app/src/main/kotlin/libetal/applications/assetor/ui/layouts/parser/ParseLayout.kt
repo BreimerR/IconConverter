@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogWindow
+import androidx.compose.ui.window.DialogWindowScope
 import br.com.devsrsouza.svg2compose.Size
 import br.com.devsrsouza.svg2compose.VectorType
 import compose.icons.FontAwesomeIcons
@@ -196,17 +198,34 @@ fun ParseLayout(mainViewModel: MainViewModel) {
 
         }
 
-        Row(Modifier.fillMaxWidth().height(centerHeight).align(Alignment.BottomEnd)) {
+        Row(
+            Modifier.fillMaxWidth().height(centerHeight).align(Alignment.BottomEnd),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Column(Modifier.fillMaxWidth(0.4f).fillMaxHeight()) {
                 Row(
-                    Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    Modifier.fillMaxWidth()
+                        .padding(start = 16.dp, end = 0.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    val inputShape = RoundedCornerShape(25)
 
-                    Column(Modifier.fillMaxWidth(.5f)) {
+                    Column(
+                        Modifier.fillMaxWidth(.5f)
+                            .shape(inputShape)
+                            .border(1.dp, MaterialTheme.colors.onPrimary, inputShape)
+                            .background(Color.Black.copy(.2f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+
+                    ) {
                         Caption("package name")
                         Spacer(Modifier.height(4.dp))
-                        Input(packageName ?: "", "com.libetal.examples", singleLine = true) { newPackageName ->
+                        Input(
+                            packageName.orEmpty(),
+                            "com.libetal.examples",
+                            singleLine = true
+                        ) { newPackageName ->
                             packageName = newPackageName.trim().ifEmpty { null }
                         }
                     }
@@ -214,68 +233,80 @@ fun ParseLayout(mainViewModel: MainViewModel) {
                     var dropDownState by remember { mutableStateOf(false) }
 
                     Row(
-                        Modifier.wrapContentSize()
-                            .shape(
-                                RoundedCornerShape(25)
-                            )
-                            .clickable {
-                                dropDownState = !dropDownState
-                            }
-                            .background(Color.Black.copy(.2f))
-                            .padding(start = 8.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                        Modifier.fillMaxWidth().wrapContentHeight(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
-                        Text(vectorType.toString())
-
-                        Icon(Assetor.ArrowDown, "Some Text")
-
-
-                        DropDownMenu(dropDownState, { dropDownState = !dropDownState }) {
-                            Column(modifier = Modifier.padding(4.dp)) {
-
-                                DropdownMenuItem({
-                                    vectorType = VectorType.SVG
-                                }) {
-                                    Text(VectorType.SVG.toString())
+                        Row(
+                            Modifier.wrapContentSize()
+                                .shape(
+                                    RoundedCornerShape(25)
+                                )
+                                .clickable {
+                                    dropDownState = !dropDownState
                                 }
+                                .background(Color.Black.copy(.2f))
+                                .padding(start = 8.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
 
-                                DropdownMenuItem({
-                                    vectorType = VectorType.DRAWABLE
-                                }) {
-                                    Text(VectorType.DRAWABLE.toString())
+                            ) {
+
+                            Text(vectorType.toString())
+
+                            Icon(Assetor.ArrowDown, "Some Text")
+
+
+                            DropDownMenu(dropDownState, { dropDownState = !dropDownState }) {
+                                Column(modifier = Modifier.padding(4.dp)) {
+
+                                    DropdownMenuItem({
+                                        vectorType = VectorType.SVG
+                                    }) {
+                                        Text(VectorType.SVG.toString())
+                                    }
+
+                                    DropdownMenuItem({
+                                        vectorType = VectorType.DRAWABLE
+                                    }) {
+                                        Text(VectorType.DRAWABLE.toString())
+                                    }
+
                                 }
-
                             }
                         }
-                    }
 
-                    Spacer(Modifier.width(4.dp))
+                        BoxWithConstraints(
+                            Modifier.wrapContentHeight().fillMaxWidth(.8f)
+                                .shape(
+                                    RoundedCornerShape(25)
+                                )
+                                .background(Color.Black.copy(.2f))
+                                .padding(start = 8.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)
+                        ) {
+                            val postSize = 30.dp
+                            val inputWidth = maxWidth - postSize
 
-                    Box(
-                        Modifier.wrapContentHeight().fillMaxWidth(.7f)
-                            .shape(
-                                RoundedCornerShape(25)
-                            )
-                            .background(Color.Black.copy(.2f))
-                            .padding(start = 8.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)
-                    ) {
-                        Text(".dp", modifier = Modifier.align(Alignment.CenterEnd))
-                        Input(
-                            iconSize?.toString() ?: "",
-                            "24",
-                            modifier = Modifier.fillMaxWidth(.6f).align(Alignment.CenterStart),
-                            singleLine = true
-                        ) { newIconSize ->
-                            iconSize = newIconSize.toIntOrNull()
+                            Text(".dp", modifier = Modifier.width(postSize).align(Alignment.CenterEnd))
+                            Input(
+                                iconSize?.toString().orEmpty(),
+                                "24",
+                                modifier = Modifier.width(inputWidth).align(Alignment.CenterStart),
+                                singleLine = true
+                            ) { newIconSize ->
+                                iconSize = newIconSize.toIntOrNull() ?: 24
+                            }
                         }
                     }
                 }
                 Column {
-                    Text("SVG | XML")
-                    Column(Modifier.fillMaxHeight(0.7f).background(Color.Black.copy(.2f)).padding(8.dp)) {
+                    Column(
+                        Modifier.fillMaxHeight(0.7f)
+                            .shape(RoundedCornerShape(20.dp))
+                            .background(Color.Black.copy(.2f))
+                            .padding(8.dp)
+                    ) {
                         Input(
-                            inputSvg ?: "",
+                            inputSvg.orEmpty(),
                             placeHolder = "<svg><!--YOUR MARKUP CODE HERE--></svg>",
                             modifier = Modifier.fillMaxSize().background(Color.Transparent),
                             containerContentAlignment = Alignment.TopStart
@@ -284,30 +315,33 @@ fun ParseLayout(mainViewModel: MainViewModel) {
                         }
                     }
 
-                    Button({
-                        errors.clear()
+                    Button(
+                        {
+                            errors.clear()
 
-                        when {
-                            inputSvg == null -> errors.add("Please Input SVG")
-                            accessorName == null -> errors.add("Add Accessor Name")
-                            iconName == null -> errors.add("Icon Name Not Set")
+                            when {
+                                inputSvg == null -> errors.add("Please Input SVG")
+                                accessorName == null -> errors.add("Add Accessor Name")
+                                iconName == null -> errors.add("Icon Name Not Set")
 
-                            else -> convert(
-                                vectorType,
-                                inputSvg!!,
-                                iconName!!,
-                                accessorName!!,
-                                "",
-                                size = iconSize?.let { Size(it) }) {
-                                errors.clear()
-                                errors.add(it.stackTraceToString())
-                            }.also { icon ->
-                                svgString = icon
+                                else -> convert(
+                                    vectorType,
+                                    inputSvg!!,
+                                    iconName!!,
+                                    accessorName!!,
+                                    "",
+                                    size = iconSize?.let { Size(it) }) {
+                                    errors.clear()
+                                    errors.add(it.stackTraceToString())
+                                }.also { icon ->
+                                    svgString = icon
+                                }
                             }
-                        }
 
-                    }) {
-                        Text("Generate")
+                        },
+                        contentPadding = PaddingValues(20.dp, 10.dp)
+                    ) {
+                        Text("GENERATE")
                     }
 
                 }
@@ -323,7 +357,8 @@ fun ParseLayout(mainViewModel: MainViewModel) {
                     SelectableText(svgFileString, textModifier = Modifier.wrapContentHeight().fillMaxWidth())
                 }
                 BoxWithConstraints(
-                    Modifier.fillMaxWidth().height(52.dp).shape(RoundedCornerShape(50)).background(Color.Black.copy(0.2f))
+                    Modifier.fillMaxWidth().height(52.dp).shape(RoundedCornerShape(50))
+                        .background(Color.Black.copy(0.2f))
                         .padding(horizontal = 8.dp, vertical = 4.dp).align(Alignment.BottomStart)
                 ) {
                     val footerIconSize = 48
@@ -333,10 +368,6 @@ fun ParseLayout(mainViewModel: MainViewModel) {
                     val dialogState = remember { mutableStateOf(false) }
                     IconButton(Assetor.IcFolder, footerIconSize, "", modifier = Modifier.align(Alignment.CenterStart)) {
                         dialogState.value = true
-                    }
-
-                    Dialog(visible = dialogState.value, onCloseRequest = { dialogState.value = false }) {
-
                     }
 
                     Input(
@@ -367,8 +398,8 @@ fun ParseLayout(mainViewModel: MainViewModel) {
 
         }
 
-        Dialog({ errors.clear() }, title = "Check On Errors", visible = errors.size > 0) {
 
+        DialogWindow({ errors.clear() }, visible = errors.size > 0, title = "Check On Errors") {
             val vScroll = rememberScrollState()
 
             Column(
@@ -384,8 +415,8 @@ fun ParseLayout(mainViewModel: MainViewModel) {
                 }
 
             }
-
         }
+
     }
 
 

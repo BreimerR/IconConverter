@@ -30,7 +30,6 @@ fun Assetor(mainViewModel: MainViewModel) = AppTheme(mainViewModel.isDarkMode) {
                 IconExplorerLayout(mainViewModel.isDarkModeState, viewModel)
             }
 
-
         }
 
     }
