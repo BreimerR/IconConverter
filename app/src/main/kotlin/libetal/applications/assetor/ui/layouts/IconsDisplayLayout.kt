@@ -1,19 +1,16 @@
 package libetal.applications.assetor.ui.layouts
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutModifier
 import androidx.compose.ui.layout.Measurable
@@ -27,10 +24,7 @@ import compose.icons.fontawesomeicons.solid.CaretDown
 import compose.icons.fontawesomeicons.solid.Search
 import libetal.applications.assetor.models.IconsViewModel
 import libetal.applications.assetor.ui.components.NavigationDropDown
-import libetal.applications.assetor.ui.icons.Assetor
-import libetal.applications.assetor.ui.icons.IcFolder
-import libetal.applications.assetor.ui.icons.Settings
-import libetal.applications.assetor.ui.icons.ThemeMode
+import libetal.applications.assetor.ui.icons.*
 import libetal.kotlin.io.File
 import libetal.kotlin.log.info
 import libetal.libraries.compose.layouts.DropDownMenu
@@ -47,21 +41,14 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
 ) {
 
     var path by remember { viewModel.pathState }
+    var deepSearch by remember { viewModel.deepSearchState }
 
     val currentRootFolderState = remember { mutableStateOf(0) }
     val icons = remember { viewModel.painters }
     val folders = remember { viewModel.folders }
-    val currentFolder by remember {
-        derivedStateOf {
-            folders.lastOrNull()
-        }
-    }
+    val currentFolder by remember { mutableStateOf("") }
 
-    val subFolders by remember {
-        derivedStateOf {
-            folders.map { IconsViewModel(it.path) }
-        }
-    }
+    val subFolders = remember { viewModel.subFolders }
 
     val lastItem = remember {
         derivedStateOf {
@@ -88,18 +75,23 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    Modifier.fillMaxSize().shape(RoundedCornerShape(50)).padding(end = 8.dp),
+                    Modifier.fillMaxSize()
+                        .shape(RoundedCornerShape(50))
+                        .background(
+                            Brush.radialGradient(
+                                radius = 300f,
+                                colors = listOf(
+                                    Color(0xFF970069),
+                                    Color(0xFF7B00A7)
+                                )
+                            )
+                        )
+                        .padding(end = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
                         Modifier.fillMaxHeight()
                             .clickable(onClick = ::toggleShowResources)
-                            .background(
-                                MaterialTheme.colors.onBackground.copy(.2f),
-                                RoundedCornerShape(
-                                    percent = 50, RoundedCornerShapeDirections.START
-                                )
-                            )
                             .roundedCornerHorizontalPadding(end = false).padding(end = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -167,63 +159,111 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val drawerWidth = 240.dp
         var iconSize by remember { mutableStateOf(80) }
-        val maxExplorerWidth = max(min(folders.size * iconSize.dp, maxWidth * 0.5f), iconSize.dp)
+        val folderContainerSize by remember { mutableStateOf(40) }
 
-        Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().fillMaxHeight(0.4f)) {
+        Column(Modifier.fillMaxSize().padding(12.dp, 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
-                Column(Modifier.width(maxExplorerWidth).fillMaxHeight()) {
-                    Row(Modifier.fillMaxWidth().height(56.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
 
-                    }
-                    LazyVerticalGrid(
-                        GridCells.Adaptive(iconSize.dp),
-                        Modifier.fillMaxSize().background(Color.Black.copy(.6f))
-                    ) {
-                        items(subFolders) { fVm ->
-                            fVm.previewFolderViewModel(iconSize.dp) {
-                                // TODO: Set current folder to this folder
-                            }
-                        }
-                    }
+                CircleIcon(
+                    Assetor.ClearFilters,
+                    {
+                    // TODO Clear filters
+                    },
+                    size = 32.dp
+                )
+
+                Row(
+                    Modifier.clickable {
+                        deepSearch = !deepSearch
+                    },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Switch(
+                        deepSearch, {
+                            deepSearch = !deepSearch
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.Green
+                        )
+                    )
+                    Text("Deep Search")
                 }
-
                 AnimatedVisibility(lastItem.value != null) {
-                    Column(Modifier.fillMaxSize()) {
-                        Row(Modifier.fillMaxWidth().height(56.dp)) {
-                            var iconSizeState by remember { mutableStateOf(false) }
-                            Button({ iconSizeState = !iconSizeState }) {
-                                Text("Icon size: $iconSize")
-                            }
-                            DropDownMenu(expanded = iconSizeState, { iconSizeState = false }) {
-                                val padding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                                val sizes = listOf(48, 52, 80, 100, 120)
 
-                                for (size in sizes) {
-                                    DropdownMenuItem(
-                                        {
-                                            iconSizeState = !iconSizeState
-                                            iconSize = size
-                                        },
-                                        contentPadding = padding,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("$size")
-                                    }
-                                }
-
-                            }
+                    Row {
+                        var iconSizeState by remember { mutableStateOf(false) }
+                        Row(
+                            Modifier
+                                .shape(RoundedCornerShape(4.dp), MaterialTheme.colors.primary, elevation = 2.dp)
+                                .clickable { iconSizeState = !iconSizeState }
+                                .padding(12.dp, 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text("ICON SIZE")
+                            Divider(
+                                Modifier.width(1.dp).height(LocalTextStyle.current.fontSize.value.dp)
+                                    .background(Color.White)
+                            )
+                            Text("$iconSize")
                         }
 
+                        DropDownMenu(expanded = iconSizeState, { iconSizeState = false }) {
+                            val padding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            val sizes = listOf(48, 52, 80, 100, 120)
 
+                            for (size in sizes) {
+                                DropdownMenuItem(
+                                    {
+                                        iconSizeState = !iconSizeState
+                                        iconSize = size
+                                    },
+                                    contentPadding = padding,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("$size")
+                                }
+                            }
+
+                        }
+                    }
+
+                }
+            }
+
+            Row(
+                Modifier.fillMaxWidth()
+                    .height((folderContainerSize * 2 + 8).dp)
+                    .shape(RoundedCornerShape(8.dp), Color.Black.copy(.6f)),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.fillMaxHeight()) {
+                    viewModel.previewFolderViewModel(120.dp)
+                }
+                Divider(Modifier.fillMaxHeight(.8f).width(1.dp).background(Color.White))
+
+                LazyVerticalGrid(
+                    GridCells.Adaptive(folderContainerSize.dp),
+                    Modifier.fillMaxWidth().fillMaxHeight(),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    items(subFolders) { fVm ->
+                        fVm.previewFolderViewModel(folderContainerSize.dp) {
+                        }
                     }
                 }
-                // TODO: Show Current Icon preview here
             }
 
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 62.dp),
-                modifier = Modifier.fillMaxSize().background(Color.Black.copy(.4f))
+                columns = GridCells.FixedSize(iconSize.dp),
+                modifier = Modifier.fillMaxSize().background(Color.Black.copy(.2f))
             ) {
 
                 itemsIndexed(icons) { i, iconViewModel ->
@@ -252,6 +292,9 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
         }
     }
 
+    LaunchedEffect(currentFolder) {
+        viewModel.updateSubFolders()
+    }
 }
 
 
@@ -307,12 +350,16 @@ class RoundedCornerHorizontalModifier(val start: Boolean, val end: Boolean) : La
 
 
 @Composable
-fun IconsViewModel.previewFolderViewModel(iconSize: Dp, onClick: () -> Unit) =
-    Column(Modifier.sizeIn(maxWidth = iconSize), horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(Assetor.IcFolder, path, Modifier.clickable {
+fun IconsViewModel.previewFolderViewModel(maxWidth: Dp, onClick: () -> Unit = {}) =
+    Row(Modifier.widthIn(min = maxWidth)
+        .clickable {
             onClick()
-        }.fillMaxWidth(0.6f))
-        Spacer(Modifier.height(2.dp))
+        }) {
+        Icon(
+            Assetor.IcFolder,
+            path,
+            Modifier.size(max(maxWidth * (1 / 3), 24.dp))
+        )
         Text(folderName)
     }
 
@@ -326,3 +373,40 @@ fun File.previewFolderViewModel(iconSize: Dp, onClick: () -> Unit) =
         Spacer(Modifier.height(2.dp))
         Text(name)
     }
+
+
+class WithinCells (private val minSize: Dp) : GridCells {
+    init {
+        require(minSize > 0.dp) { "Provided min size $minSize should be larger than zero." }
+    }
+
+    override fun Density.calculateCrossAxisCellSizes(
+        availableSize: Int,
+        spacing: Int
+    ): List<Int> {
+        val count = maxOf((availableSize + spacing) / (minSize.roundToPx() + spacing), 1)
+        return calculateCellsCrossAxisSizeImpl(availableSize, count, spacing)
+    }
+
+    override fun hashCode(): Int {
+        return minSize.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is WithinCells && minSize == other.minSize
+    }
+
+    fun calculateCellsCrossAxisSizeImpl(
+        gridSize: Int,
+        slotCount: Int,
+        spacing: Int
+    ): List<Int> {
+        val gridSizeWithoutSpacing = gridSize - spacing * (slotCount - 1)
+        val slotSize = gridSizeWithoutSpacing / slotCount
+        val remainingPixels = gridSizeWithoutSpacing % slotCount
+        return List(slotCount) {
+            slotSize + if (it < remainingPixels) 1 else 0
+        }
+    }
+
+}

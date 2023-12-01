@@ -22,12 +22,12 @@ fun Assetor(mainViewModel: MainViewModel) = AppTheme(mainViewModel.isDarkMode) {
 
         Narration {
 
-            AppNarrations.PARSER {
-                ParseLayout(mainViewModel)
-            }
-
             AppNarrations.FILE_EXPLORER(this, { IconsViewModel() }) { viewModel ->
                 IconExplorerLayout(mainViewModel.isDarkModeState, viewModel)
+            }
+
+            AppNarrations.PARSER {
+                ParseLayout(mainViewModel)
             }
 
         }

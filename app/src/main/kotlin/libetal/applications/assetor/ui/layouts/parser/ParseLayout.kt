@@ -1,5 +1,6 @@
 package libetal.applications.assetor.ui.layouts.parser
 
+import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,26 +9,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogWindow
-import androidx.compose.ui.window.DialogWindowScope
 import br.com.devsrsouza.svg2compose.Size
 import br.com.devsrsouza.svg2compose.VectorType
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.solid.Copy
 import libetal.applications.assetor.*
-import libetal.applications.assetor.ui.AppNarrations
 import libetal.applications.assetor.ui.components.NavigationDropDown
 import libetal.applications.assetor.ui.icons.*
 import libetal.applications.assetor.ui.layouts.SelectableText
 import libetal.applications.assetor.utils.annotated
 import libetal.kotlin.compose.narrator.NarrationScopeImpl
 import libetal.kotlin.compose.narrator.createScopeCollector
-import libetal.kotlin.compose.narrator.narrative
 import libetal.kotlin.io.File
 import libetal.libraries.compose.layouts.Caption
 import libetal.libraries.compose.layouts.DropDownMenu
@@ -44,10 +42,13 @@ import java.io.FilenameFilter
 fun ParseLayout(mainViewModel: MainViewModel) {
 
     val vScrollState = rememberScrollState()
-    var inputSvg by remember { mutableStateOf<String?>(null) }
-    var resourcePath by remember { mutableStateOf<String?>(null) }
+    val inputSvgState = remember { mutableStateOf<String?>(null) }
+    var inputSvg by inputSvgState
+    var resourcePathState = remember { mutableStateOf<String?>(null) }
+    var resourcePath by resourcePathState
     var accessorName by remember { mutableStateOf<String?>(null) }
-    var iconName by remember { mutableStateOf<String?>(null) }
+    val iconNameState = remember { mutableStateOf<String?>(null) }
+    var iconName by iconNameState
     var packageName by remember { mutableStateOf<String?>(null) }
     val safeIconName by derivedStateOf {
         iconName ?: "Icons"
@@ -95,12 +96,6 @@ fun ParseLayout(mainViewModel: MainViewModel) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val resourceInputShape = RoundedCornerShape(50)
-            val resourceModifier =
-                Modifier.fillMaxWidth(.4f)
-                    .height(48.dp).border(1.dp, Color.Black, resourceInputShape)
-                    .shape(resourceInputShape, Color.Black.copy(0.1f))
-                    .padding(end = 8.dp)
 
             val inputModifier =
                 Modifier.fillMaxWidth(.2f)
@@ -109,60 +104,7 @@ fun ParseLayout(mainViewModel: MainViewModel) {
 
             val showSelectResource = remember { mutableStateOf(false) }
 
-            InputLayout(resourceModifier) {
-                Row(
-                    Modifier.fillMaxHeight().shape(RoundedCornerShape(topStart = 25f, bottomStart = 25f)).clickable {
-                        showSelectResource.value = !showSelectResource.value
-                    }.padding(start = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Resources")
-                    Spacer(Modifier.width(4.dp))
-                    Icon(Assetor.ArrowDown, "Show Resources")
-
-                    NavigationDropDown(showSelectResource)
-                }
-                Spacer(Modifier.width(4.dp))
-                BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
-                    val inputWidth = maxWidth - 32.dp
-                    Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                        Input(
-                            value = resourcePath ?: "",
-                            placeHolder = "/home/brymher/Pictures/Icon.svg",
-                            modifier = Modifier.width(inputWidth),
-                            singleLine = true,
-                            placeHolderModifier = Modifier.width(inputWidth)
-                        ) { newResourcePath ->
-                            resourcePath = newResourcePath
-                        }
-                        IconButton(Assetor.IcFolder, 32, "Open File Selection") {
-                            val fileDialog = FileDialog(
-                                ComposeWindow()
-                            )
-
-                            var path = "/"
-                            fileDialog.filenameFilter = FilenameFilter { _, name ->
-                                name.substringAfterLast(".") == "svg"
-                            }
-                            fileDialog.isMultipleMode = false
-                            fileDialog.isVisible = true
-
-                            when (val fileName = fileDialog.file) {
-                                null -> {}
-                                else -> {
-                                    resourcePath = "${fileDialog.directory}$fileName"
-
-                                    val file = File(resourcePath!!)
-                                    iconName = fileName.substringBeforeLast(".").camelCase.titleCase
-                                    inputSvg = file.readText()
-                                }
-                            }
-
-
-                        }
-                    }
-                }
-            }
+            ResourcesInput(showSelectResource, resourcePathState, inputSvgState, iconNameState)
 
             Spacer(Modifier.width(4.dp))
 
@@ -421,6 +363,102 @@ fun ParseLayout(mainViewModel: MainViewModel) {
 
 
 }
+
+@Composable
+private fun ResourcesInput(
+    showSelectResource: MutableState<Boolean>,
+    resourcePathState: MutableState<String?>,
+    inputSvgState: MutableState<String?>,
+    iconNameState: MutableState<String?>
+) {
+
+    val resourceInputShape = RoundedCornerShape(50)
+    val startColor = 0xFF88007A
+    val endColor = startColor
+    val resourceModifier =
+        Modifier.fillMaxWidth(.4f)
+            .height(48.dp).border(1.dp, Color.Black, resourceInputShape)
+            .shape(resourceInputShape, Color.Black.copy(0.1f))
+            .background(
+                Brush.radialGradient(
+                    radius = 300f,
+                   colors = listOf(
+                       Color(0xFF970069),
+                       Color(0xFF7B00A7)
+                   )
+                )
+            )
+            .padding(end = 8.dp)
+
+    var resourcePath by resourcePathState
+    var iconName by iconNameState
+    var inputSvg by inputSvgState
+    InputLayout(resourceModifier) {
+        Row(
+            Modifier.fillMaxHeight()
+                .clickable {
+                    showSelectResource.value = !showSelectResource.value
+                }
+                .padding(start = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Resources")
+            Spacer(Modifier.width(4.dp))
+            Icon(Assetor.ArrowDown, "Show Resources")
+
+            NavigationDropDown(showSelectResource)
+        }
+        Spacer(Modifier.width(4.dp))
+        BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
+            val inputWidth = maxWidth - 32.dp
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                Input(
+                    value = resourcePath ?: "",
+                    placeHolder = "/home/brymher/Pictures/Icon.svg",
+                    modifier = Modifier.width(inputWidth),
+                    singleLine = true,
+                    placeHolderModifier = Modifier.width(inputWidth)
+                ) { newResourcePath ->
+                    resourcePath = newResourcePath
+                }
+                IconButton(Assetor.IcFolder, 32, "Open File Selection") {
+                    val fileDialog = FileDialog(
+                        ComposeWindow()
+                    )
+
+                    var path = "/"
+                    fileDialog.filenameFilter = FilenameFilter { _, name ->
+                        name.substringAfterLast(".") == "svg"
+                    }
+                    fileDialog.isMultipleMode = false
+                    fileDialog.isVisible = true
+
+                    when (val fileName = fileDialog.file) {
+                        null -> {}
+                        else -> {
+                            resourcePath = "${fileDialog.directory}$fileName"
+
+                            val file = File(resourcePath!!)
+                            iconName = fileName.substringBeforeLast(".").camelCase.titleCase
+                            inputSvg = file.readText()
+                        }
+                    }
+
+
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ResourcesInputPreview() = ResourcesInput(
+    remember { mutableStateOf(false) },
+    remember { mutableStateOf(null) },
+    remember { mutableStateOf(null) },
+    remember { mutableStateOf(null) }
+)
 
 @Composable
 fun Modifier.applySharedHeaderInputStyle() =

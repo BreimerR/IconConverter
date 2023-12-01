@@ -11,17 +11,17 @@ import libetal.kotlin.log.info
 
 class IconsViewModel(initialPath: String = System.getProperty("user.home")!!) : ViewModel() {
 
-    val file by lazy {
-        File(path)
-    }
+    val file
+        get() = File(pathState.value)
 
     val pathState by laziest {
         mutableStateOf(initialPath)
     }
 
-    val folderName by lazy {
-        file.name
-    }
+    val deepSearchState = mutableStateOf(false)
+
+    val folderName
+        get() = file.name
 
     val folders by laziest {
         if (file.isDirectory)
@@ -30,6 +30,23 @@ class IconsViewModel(initialPath: String = System.getProperty("user.home")!!) : 
             )
         else mutableStateListOf()
 
+    }
+
+
+    val subFolders by lazy {
+        mutableStateListOf<IconsViewModel>()
+    }
+
+    fun updateSubFolders() {
+        val files = File(path).listFiles() ?: emptyArray()
+
+        for (file in files) {
+            if (file.isDirectory) {
+                subFolders.add(
+                    IconsViewModel((file.path))
+                )
+            }
+        }
     }
 
     val painters by laziest {

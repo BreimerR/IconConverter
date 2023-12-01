@@ -23,13 +23,14 @@ having that as a feature will be done later or already has been done.
     1. [v1.0.1] Fair enough depending on your directories sizes
     2. [v1.0.2] Quite efficient
        ```Each directory sweep is it's own thread & each file read is it's own thread 🔥```
+       1. Not as cool as it sounds doesn't even work right 🥵
 
 ## Workarounds
 
 1. Be patient
 2. Close and restart
 3. Shut down your whole pc. Disconnect from power. Shutdown mains and turn everything off it's over.
-4. Download new version ()
+4. Download new version 🤠
 
 ## Features
 
@@ -38,6 +39,7 @@ having that as a feature will be done later or already has been done.
     1. [x] Linux Buggy
     2. [ ] Not tested (Working on it but fixing base code first)
     3. [ ] Mac (Just no, for now!!)
+3. Allow user to zoom into a specific icon
 
 ## Installation
 
