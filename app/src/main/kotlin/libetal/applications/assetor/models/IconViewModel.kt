@@ -8,13 +8,17 @@ import libetal.kotlin.io.File
 import libetal.kotlin.laziest
 import libetal.libraries.compose.painter.loadSvgPainter
 
-class IconViewModel(private val file: File, private val density: Density = Density(24f)) : ViewModel() {
+class IconViewModel(file: File, density: Density = Density(24f)) : ViewModel() {
+
+    val name by lazy {
+        file.name
+    }
 
     val painter by laziest {
         mutableStateOf<Painter?>(null).apply {
             ioLaunch {
                 try {
-                    val painter= loadSvgPainter(file, density)
+                    val painter = loadSvgPainter(file, density)
                     launch {
                         value = painter
                     }
@@ -23,4 +27,5 @@ class IconViewModel(private val file: File, private val density: Density = Densi
             }
         }
     }
+
 }

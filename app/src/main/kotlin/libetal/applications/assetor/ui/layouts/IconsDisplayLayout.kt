@@ -2,11 +2,12 @@ package libetal.applications.assetor.ui.layouts
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -31,11 +32,16 @@ import libetal.applications.assetor.ui.icons.Assetor
 import libetal.applications.assetor.ui.icons.IcFolder
 import libetal.applications.assetor.ui.icons.Settings
 import libetal.applications.assetor.ui.icons.ThemeMode
+import androidx.compose.foundation.lazy.itemsIndexed
+import libetal.kotlin.io.File
+import libetal.kotlin.log.info
 import libetal.libraries.compose.layouts.DropDownMenu
 import libetal.libraries.compose.layouts.IconButton
 import libetal.libraries.compose.layouts.text.Input
 import libetal.libraries.compose.ui.shape
 
+
+val TAG = "IconsDisplayLayout"
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
@@ -44,16 +50,28 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
 ) {
 
     var path by remember { viewModel.pathState }
-    val icons = remember {
-        mutableStateListOf<IconViewModel>()
+
+    val currentRootFolderState = remember { mutableStateOf(0) }
+    val icons = remember { viewModel.painters }
+    val folders = remember { viewModel.folders }
+    val currentFolder by remember {
+        derivedStateOf {
+            folders.lastOrNull()
+        }
     }
-    val folders = remember { mutableStateListOf<FolderViewModel<IconViewModel>>() }
+
+    val subFolders by remember {
+        derivedStateOf {
+            folders.map { IconsViewModel(it.path) }
+        }
+    }
+
     val lastItem = remember {
         derivedStateOf {
             folders.lastOrNull()
         }
     }
-    val painters = remember { viewModel.painters }
+
     var showSearchField by remember { mutableStateOf(false) }
     var iconSearch by remember { mutableStateOf<String?>(null) }
     val showResources = remember { mutableStateOf(false) }
@@ -109,8 +127,8 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
                                 "ic_icon_name",
                                 singleLine = true,
                                 containerModifier = Modifier.width(maxWidth - 64.dp).align(Alignment.CenterStart)
-                            ) { newIconSerch ->
-                                iconSearch = newIconSerch
+                            ) { newIconSearch ->
+                                iconSearch = newIconSearch
                             }
                         }
                         Row(
@@ -120,9 +138,10 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
                                 IconButton(
                                     FontAwesomeIcons.Solid.ArrowRight, iconSize = 32, modifier = Modifier
                                 ) {
+                                    TAG info "Clearing folders"
                                     folders.clear()
-                                    viewModel.explore(folders)
-                                    folders.firstOrNull()?.getAll(icons)
+                                    icons.clear()
+                                    viewModel.scan()
                                 }
                             }
 
@@ -160,25 +179,26 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
                     Row(Modifier.fillMaxWidth().height(56.dp)) {
 
                     }
-                    LazyRow(Modifier.fillMaxSize()) {
-                        itemsIndexed(folders) { i, folderViewModel ->
-                            folderViewModel.previewFolderViewModel(iconSize.dp)
+                    LazyVerticalGrid(
+                        GridCells.Adaptive(iconSize.dp),
+                        Modifier.fillMaxSize().background(Color.Black.copy(.6f))
+                    ) {
+                        items(subFolders) { fVm ->
+                            fVm.previewFolderViewModel(iconSize.dp) {
+                                // TODO: Set current folder to this folder
+                            }
                         }
                     }
                 }
 
                 AnimatedVisibility(lastItem.value != null) {
-                    val subFolders by remember {
-                        derivedStateOf {
-                            lastItem.value!!.subFolders
-                        }
-                    }
                     Column(Modifier.fillMaxSize()) {
                         Row(Modifier.fillMaxWidth().height(56.dp)) {
                             var iconSizeState by remember { mutableStateOf(false) }
                             Button({ iconSizeState = !iconSizeState }) {
                                 Text("Icon size: $iconSize")
                             }
+                            Text("Current Folder = ${currentRootFolderState.value}")
                             DropDownMenu(expanded = iconSizeState, { iconSizeState = false }) {
                                 libetal.libraries.compose.layouts.DropdownMenuItem({
                                     iconSizeState = !iconSizeState
@@ -200,31 +220,39 @@ fun IconExplorerLayout(themeMode: MutableState<Boolean>, viewModel: IconsViewMod
                                 }
                             }
                         }
-                        LazyVerticalGrid(
-                            GridCells.Adaptive(iconSize.dp),
-                            Modifier.fillMaxSize().background(Color.Black.copy(.6f))
-                        ) {
-                            items(subFolders) { fVm ->
-                                fVm.previewFolderViewModel(iconSize.dp)
-                            }
-                        }
+
 
                     }
                 }
+                // TODO: Show Current Icon preview here
 
             }
-            
-            LazyVerticalGrid(cells = GridCells.Adaptive(minSize = 62.dp), Modifier.fillMaxSize()) {
-                items(icons) { iconViewModel ->
+
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 62.dp),
+                modifier = Modifier.fillMaxSize().background(Color.Black.copy(.4f))
+            ) {
+
+                itemsIndexed(icons) { i, iconViewModel ->
+                    if (i == icons.size - 1) {
+                        viewModel.scan()
+                    }
                     val painter by remember { iconViewModel.painter }
                     Column(Modifier.padding(2.dp)) {
                         AnimatedVisibility(painter != null) {
-                            Icon(painter!!, "Icon Name", modifier = Modifier.size(56.dp))
+                            Icon(painter!!, iconViewModel.name, modifier = Modifier.size(56.dp))
                         }
                     }
                 }
             }
 
+        }
+    }
+
+    DisposableEffect(icons, folders) {
+        onDispose {
+            icons.clear()
+            folders.clear()
         }
     }
 
@@ -283,7 +311,18 @@ class RoundedCornerHorizontalModifier(val start: Boolean, val end: Boolean) : La
 
 
 @Composable
-fun <T : Any> FolderViewModel<T>.previewFolderViewModel(iconSize: Dp) =
+fun IconsViewModel.previewFolderViewModel(iconSize: Dp, onClick: () -> Unit) =
+    Column(Modifier.sizeIn(maxWidth = iconSize), horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(Assetor.IcFolder, path, Modifier.clickable {
+            onClick()
+        }.fillMaxWidth(0.6f))
+        Spacer(Modifier.height(2.dp))
+        Text(folderName)
+    }
+
+
+@Composable
+fun File.previewFolderViewModel(iconSize: Dp, onClick: () -> Unit) =
     Column(Modifier.sizeIn(maxWidth = iconSize), horizontalAlignment = Alignment.CenterHorizontally) {
         Icon(Assetor.IcFolder, path, Modifier.clickable {
             onClick()
