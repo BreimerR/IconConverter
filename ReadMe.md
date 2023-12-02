@@ -40,6 +40,7 @@ having that as a feature will be done later or already has been done.
     2. [ ] Not tested (Working on it but fixing base code first)
     3. [ ] Mac (Just no, for now!!)
 3. Allow user to zoom into a specific icon
+   1. When a user holds ctrl+mouse scroll the user should be able to scroll in the grid view and zoom into the icon
 
 ## Installation
 
